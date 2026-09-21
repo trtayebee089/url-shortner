@@ -4,7 +4,7 @@ Audit date: 2026-09-21 (Asia/Dhaka)
 
 Branch: `main`
 
-Audited HEAD: `a31eb017c3d6b56609c3be4d3dacf96abdbdfddd` plus the uncommitted audit fixes listed below
+Audited application commit: `605fcc6a94f18d55cf8894af4cc2e8c2d67610d1`, pushed to `origin/main` with passing GitHub CI #5
 
 Environment tested: isolated local production build, temporary SQLite database, database cache/queue
 
@@ -39,7 +39,7 @@ Statuses are limited to `PASS`, `FAIL`, `BLOCKED`, and `NOT APPLICABLE`. `PASS` 
 | Docker | PASS | `docker compose config --services` | 7 services resolved | Added `phpredis` to backend image | Static config only |
 | Docker | BLOCKED | Build/up/health/logs | Docker Desktop service is stopped and could not be started | None | No container was built or run |
 | Nginx | BLOCKED | `nginx -t`, TLS, proxy/cache/routing runtime | Static configs reviewed; Nginx runtime unavailable | No target-specific domain/socket changes made | Requires container or target |
-| GitHub | BLOCKED | Remote parity and latest CI | Committed `HEAD` equals `origin/main` at `a31eb01`, but 12 candidate files are local-only; CI #3 is failed | Corrected malformed `setup-php` extension input and added Composer validation/audit locally | Commit/push and a successful GitHub run are pending |
+| GitHub | PASS | Remote parity and latest CI | Candidate pushed to `origin/main`; CI #5 passed at `605fcc6` | Corrected malformed `setup-php` input, made PHPUnit discovery portable, and added Composer validation/audit | Backend and frontend jobs passed |
 | Deployment | BLOCKED | Target, backup, migration, publish, live smoke | Repo uses `example.com`; Hostinger inventory auth timed out; no target/credentials/backup | Deployment intentionally stopped | Not deployed |
 | Monitoring | BLOCKED | Live health, alerting, log aggregation/rotation | Health routes work locally; no live monitoring target | Required signals documented | Target configuration pending |
 | Backups | BLOCKED | Production backup and isolated restore | No production database access | Procedure documented below | Neither backup nor restore was run |
@@ -52,11 +52,11 @@ Statuses are limited to `PASS`, `FAIL`, `BLOCKED`, and `NOT APPLICABLE`. `PASS` 
 
 1. Exact production domains, host/project, deployment user, process manager, paths, and PHP socket are not configured; Nginx remains an example template.
 2. Hostinger website inventory did not authenticate before timeout, so no hosting target was selected or mutated.
-3. Docker Desktop is installed but its daemon/service is unavailable. MySQL 8, Redis, PHP-FPM, Nginx, Compose health checks, Redis queues, and container logs were not exercised.
+3. Docker Desktop is installed but its daemon/service is unavailable. A hidden launch was attempted twice; starting `com.docker.service` failed because the current process cannot open the service. MySQL 8, Redis, PHP-FPM, Nginx, Compose health checks, Redis queues, and container logs were not exercised.
 4. No production database backup was created/restored and no production migration was run.
 5. `2026_09_19_120000_harden_analytics_events.php` requires a production-like MySQL clone and lock-duration review before release.
 6. Real SMTP, production TLS/HTTPS, secure cookies, CORS, proxies, monitoring, and post-deploy logs remain unverified.
-7. The candidate includes 12 uncommitted audit/CI files and therefore has no deployable commit SHA. GitHub CI #3 for current remote `main` is failed; the workflow correction has not been pushed or executed remotely.
+7. GitHub source synchronization and CI are complete, but they do not clear the infrastructure, backup, migration, SMTP, TLS, and live-smoke blockers above.
 
 ## Fixes made
 
@@ -66,6 +66,7 @@ Statuses are limited to `PASS`, `FAIL`, `BLOCKED`, and `NOT APPLICABLE`. `PASS` 
 - Make full SQLite rollback safe by dropping role/status indexes first.
 - Add API-surface, auth expiry/revocation, rate-limit/`Retry-After`, query, UTM, and IDOR tests.
 - Correct GitHub Actions `setup-php` extension syntax and add Composer validation/audit gates.
+- Make PHPUnit discover the complete `tests` tree without depending on an untracked empty `tests/Unit` directory.
 
 ## Commands executed
 

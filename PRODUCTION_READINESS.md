@@ -1,8 +1,8 @@
 # 247URL production readiness report
 
-Report timestamp: 2026-09-21 17:22:16 +06:00
+Report timestamp: 2026-09-21 17:31:57 +06:00
 
-Audited branch/HEAD: `main` / `a31eb017c3d6b56609c3be4d3dacf96abdbdfddd` plus uncommitted audit fixes
+Audited branch: `main`; application candidate committed and pushed through `605fcc6a94f18d55cf8894af4cc2e8c2d67610d1`
 
 Decision: **BLOCKED — not published and not declared production-ready**
 
@@ -31,7 +31,7 @@ The detailed test/fix ledger, commands, blockers, deployment sequence, and rollb
 | L. Docker tests | BLOCKED | Static Compose service resolution passed; daemon stopped, so no build/up/health/log test |
 | M. Nginx tests | BLOCKED | Static review only; no `nginx -t`, TLS, PHP-FPM, proxy or caching runtime |
 | N. Production build | PASS | Nuxt 3.21.11/Nitro build passed; isolated production server returned SSR pages and completed browser flows |
-| N. GitHub CI / source sync | BLOCKED | `HEAD` and `origin/main` both resolve to `a31eb017c3d6b56609c3be4d3dacf96abdbdfddd`, but 12 candidate files are not committed or pushed. GitHub CI #3 failed because the PHP extensions were malformed as separate `setup-php` inputs; the workflow is corrected locally but has not run on GitHub |
+| N. GitHub CI / source sync | PASS | Audit fixes were pushed to `main`; CI #5 passed for `605fcc6a94f18d55cf8894af4cc2e8c2d67610d1`. Backend and frontend jobs completed successfully |
 | O. Deployment result | BLOCKED | No explicit target/credentials/verified backup; Hostinger inventory authentication timed out; nothing uploaded or changed |
 | P. Live smoke tests | BLOCKED | No live deployment was performed |
 
@@ -65,7 +65,7 @@ The frontend build's largest client chunk was 210.46 kB raw / 77.71 kB gzip. Lig
 | API URL | BLOCKED — not established |
 | Short-link domain | BLOCKED — not established |
 | Deployment timestamp | NOT APPLICABLE — no deployment |
-| Git commit | BLOCKED — audited HEAD plus uncommitted fixes |
+| Git commit | PASS — application candidate `605fcc6a94f18d55cf8894af4cc2e8c2d67610d1` pushed to `origin/main`; CI passed |
 | Database migration | BLOCKED — not run on production/MySQL |
 | Frontend build | PASS — local production build |
 | Backend tests | PASS — 57/57 |
@@ -114,12 +114,11 @@ The complete Git, browser, design-reference, performance, secret-scan, and runti
 
 1. Identify and approve the exact domain(s), host/project/account, server paths, process manager, PHP socket, database, and rollback release.
 2. Authenticate the hosting connector or supply the approved deployment channel without exposing secrets.
-3. Produce a clean reviewed commit containing the audit and CI fixes, push it, and require the new GitHub CI run to pass.
-4. Start Docker or use staging to build the image and run MySQL 8, Redis, PHP-FPM, Nuxt, workers, scheduler, and Nginx.
-5. Restore a fresh production backup into an isolated MySQL database and rehearse migrations, especially analytics column alters.
-6. Verify real SMTP verification/reset delivery.
-7. Configure exact production environment values and validate TLS, secure cookies, CORS, trusted proxies, CSP, headers, robots/sitemap, and monitoring.
-8. Follow the safe deployment and rollback procedures in `FINAL_PRODUCTION_AUDIT.md`.
-9. Run live health, full smoke, real 302/query/analytics, and post-deploy log checks.
+3. Start Docker with administrator access or use staging to build the image and run MySQL 8, Redis, PHP-FPM, Nuxt, workers, scheduler, and Nginx.
+4. Restore a fresh production backup into an isolated MySQL database and rehearse migrations, especially analytics column alters.
+5. Verify real SMTP verification/reset delivery.
+6. Configure exact production environment values and validate TLS, secure cookies, CORS, trusted proxies, CSP, headers, robots/sitemap, and monitoring.
+7. Follow the safe deployment and rollback procedures in `FINAL_PRODUCTION_AUDIT.md`.
+8. Run live health, full smoke, real 302/query/analytics, and post-deploy log checks.
 
 Until every blocker above is resolved, deployment remains prohibited.
