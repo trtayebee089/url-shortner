@@ -10,6 +10,7 @@
 - Nuxt keeps the primary session token in an HTTP-only, `Secure`, SameSite=Lax production `__Host-` cookie. It is not stored in `localStorage`. Unsafe BFF calls reject cross-site Origin/Fetch-Metadata signals, and the generic proxy cannot call login or registration endpoints that return plaintext tokens.
 - CORS allowlists origins and headers. Laravel emits anti-framing, MIME sniffing, referrer, and permissions headers. Nginx production guidance adds HSTS.
 - Eloquent/query bindings prevent SQL injection; Vue escapes interpolated content; error responses do not expose production stack traces.
+- Resource articles are typed local data rendered as Vue text nodes. The frontend does not render user-controlled HTML, link titles, descriptions, tags, or resource copy through `v-html`.
 - Raw IP addresses are transformed into daily HMAC visitor hashes before queueing. Queue payloads contain no raw IP.
 - Analytics dispatch failures are logged and never block a valid redirect. Unique event IDs make worker retries idempotent; daily visitor uniqueness is database-enforced.
 

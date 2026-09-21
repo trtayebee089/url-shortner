@@ -13,6 +13,13 @@ class AnalyticsController extends Controller
 {
     public function __construct(private readonly AnalyticsService $analytics) {}
 
+    public function index(Request $request): JsonResponse
+    {
+        $period = $request->validate(['period' => ['sometimes', Rule::in(['7d', '30d', '90d'])]])['period'] ?? '30d';
+
+        return response()->json(['data' => $this->analytics->forUser($request->user(), $period)]);
+    }
+
     public function show(Request $request, Link $link): JsonResponse
     {
         $this->authorize('view', $link);

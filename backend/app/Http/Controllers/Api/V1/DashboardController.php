@@ -16,7 +16,9 @@ class DashboardController extends Controller
 
         return response()->json(['data' => [
             'total_links' => (clone $query)->count(),
+            'active_links' => (clone $query)->where('is_active', true)->where(fn ($item) => $item->whereNull('expires_at')->orWhere('expires_at', '>', now()))->count(),
             'total_clicks' => (int) (clone $query)->sum('clicks_count'),
+            'unique_visitors' => (int) $request->user()->links()->join('link_daily_stats', 'links.id', '=', 'link_daily_stats.link_id')->sum('unique_clicks'),
             'clicks_today' => (int) $request->user()->links()->join('link_daily_stats', 'links.id', '=', 'link_daily_stats.link_id')->whereDate('stat_date', today())->sum('clicks'),
             'clicks_this_month' => (int) $request->user()->links()->join('link_daily_stats', 'links.id', '=', 'link_daily_stats.link_id')->where('stat_date', '>=', now()->startOfMonth())->sum('clicks'),
             'recent_links' => LinkResource::collection((clone $query)->with('tags')->latest()->limit(5)->get()),

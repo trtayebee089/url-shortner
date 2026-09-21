@@ -29,6 +29,7 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
 
     Route::middleware(['auth:sanctum', 'active', 'verified'])->group(function () {
         Route::get('dashboard', DashboardController::class)->middleware('ability:links:read,analytics:read');
+        Route::get('analytics', [AnalyticsController::class, 'index'])->middleware(['abilities:analytics:read', 'throttle:analytics']);
         Route::post('links', [LinkController::class, 'store'])->middleware(['abilities:links:write', 'throttle:authenticated-create']);
         Route::get('links', [LinkController::class, 'index'])->middleware('abilities:links:read');
         Route::get('links/{link}', [LinkController::class, 'show'])->middleware('abilities:links:read');

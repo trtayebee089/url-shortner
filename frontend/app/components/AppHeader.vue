@@ -1,17 +1,13 @@
 <script setup lang="ts">
 const open = ref(false)
+const route = useRoute()
 const { user } = useAuth()
-const links = [{ to: '/features', label: 'Features' }, { to: '/pricing', label: 'Pricing' }, { to: '/faq', label: 'FAQ' }, { to: '/about', label: 'About' }]
+const links = [{ to: '/features', label: 'Product' }, { to: '/features', label: 'Features' }, { to: '/pricing', label: 'Pricing' }, { to: '/resources', label: 'Resources' }]
+watch(() => route.fullPath, () => { open.value = false })
 </script>
-
 <template>
-  <header class="sticky top-0 z-40 border-b border-white/10 bg-ink-950/90 backdrop-blur-xl">
-    <div class="container-shell flex h-18 items-center justify-between py-4">
-      <NuxtLink to="/" class="flex items-center gap-2 text-lg font-black tracking-tight" aria-label="247URL home"><span class="grid size-9 place-items-center rounded-xl bg-teal-300 text-ink-950">↗</span>247URL</NuxtLink>
-      <nav class="hidden items-center gap-7 md:flex" aria-label="Primary navigation"><NuxtLink v-for="link in links" :key="link.to" :to="link.to" class="text-sm font-semibold text-slate-300 hover:text-white">{{ link.label }}</NuxtLink></nav>
-      <div class="hidden items-center gap-3 md:flex"><NuxtLink v-if="!user" to="/login" class="btn-secondary">Sign in</NuxtLink><NuxtLink :to="user ? '/dashboard' : '/register'" class="btn-primary">{{ user ? 'Dashboard' : 'Create account' }}</NuxtLink></div>
-      <button class="rounded-lg p-2 md:hidden" type="button" :aria-expanded="open" aria-label="Toggle menu" @click="open = !open">☰</button>
-    </div>
-    <nav v-if="open" class="container-shell grid gap-2 border-t border-white/10 py-4 md:hidden" aria-label="Mobile navigation"><NuxtLink v-for="link in links" :key="link.to" :to="link.to" class="rounded-lg px-3 py-2 hover:bg-white/5" @click="open = false">{{ link.label }}</NuxtLink><NuxtLink to="/login" class="rounded-lg px-3 py-2">Sign in</NuxtLink></nav>
+  <header class="sticky top-0 z-40 flex h-[68px] items-center border-b border-border bg-surface/95 backdrop-blur">
+    <div class="container-shell flex items-center justify-between gap-8"><AppLogo /><nav class="hidden flex-1 items-center gap-0.5 md:flex" aria-label="Main navigation"><NuxtLink v-for="link in links" :key="`${link.to}-${link.label}`" :to="link.to" class="rounded-md px-3 py-2 text-sm text-text-secondary transition hover:bg-surface2 hover:text-text-primary" :class="route.path === link.to ? 'text-brand' : ''">{{ link.label }}</NuxtLink></nav><div class="hidden items-center gap-2 md:flex"><NuxtLink v-if="!user" to="/login" class="btn-ghost">Sign in</NuxtLink><NuxtLink :to="user ? '/dashboard' : '/register'" class="btn-primary">{{ user ? 'Dashboard' : 'Get started' }}</NuxtLink></div><button type="button" class="grid size-8 place-items-center text-text-secondary md:hidden" :aria-expanded="open" aria-controls="mobile-navigation" aria-label="Toggle menu" @click="open = !open"><svg v-if="open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg><svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></div>
+    <nav v-if="open" id="mobile-navigation" class="absolute inset-x-0 top-full border-b border-border bg-surface px-5 py-3 shadow-md md:hidden" aria-label="Mobile navigation"><div class="mx-auto flex max-w-6xl flex-col gap-0.5"><NuxtLink v-for="link in links" :key="`${link.to}-${link.label}`" :to="link.to" class="rounded-md px-3 py-2.5 text-sm text-text-secondary hover:bg-surface2 hover:text-text-primary">{{ link.label }}</NuxtLink><div class="mt-2 grid gap-2 border-t border-border pt-3"><NuxtLink to="/login" class="btn-secondary">Sign in</NuxtLink><NuxtLink :to="user ? '/dashboard' : '/register'" class="btn-primary">{{ user ? 'Dashboard' : 'Get started' }}</NuxtLink></div></div></nav>
   </header>
 </template>

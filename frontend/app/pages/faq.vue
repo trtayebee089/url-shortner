@@ -1,5 +1,21 @@
 <script setup lang="ts">
-useSeoPage('Frequently asked questions', 'Answers about link behavior, analytics, privacy, expiration, and custom domains.', '/faq')
-const faqs = [['Why does 247URL use a 302 redirect?', 'Destinations are editable. A 302 Found response avoids browsers and intermediaries treating a destination as permanently fixed.'], ['Are short codes case-sensitive?', 'Yes. Generated codes use a case-sensitive, URL-safe alphabet. Production MySQL is configured with a binary collation so the database enforces the same rule.'], ['What happens when a link expires?', 'It returns an unavailable response and is disabled by scheduled maintenance. The record and aggregate analytics remain available to its owner.'], ['Do you visit the URL I submit?', 'No. Normal shortening validates and stores the URL without making a server-side request to the destination.'], ['How are unique clicks counted?', 'A rotating daily HMAC derived from request context supports approximate daily unique counts. Raw IP addresses are not persisted.'], ['Can analytics delay redirects?', 'Analytics are queued after a valid link is resolved. Dispatch or processing failures are logged and do not block the redirect.'], ['Can I use a separate short domain?', 'Yes. The displayed short domain and redirect host are environment configuration, not embedded in the link model.'], ['How do I report a malicious link?', 'Use the abuse API or the published abuse contact. Reports enter an admin moderation queue.']]
+useSeoPage('FAQ', 'Answers about short links, analytics, privacy, expiration, and deployment.', '/faq')
+const items = [['Can I choose my own alias?','Yes. Managed links support unique aliases using letters, numbers, hyphens, and underscores.'],['What happens when I edit a destination?','The same short URL begins redirecting to the new destination. The backend invalidates its cached redirect metadata immediately.'],['Do links expire?','Only when you set an expiration. Expired links return an unavailable response and are not redirected.'],['How are unique visitors counted?','The redirect layer creates a keyed, daily hash before queueing analytics. Raw IP addresses are not stored.'],['Can analytics delay a redirect?','No. A valid destination is returned as a 302 even if analytics dispatch is unavailable.'],['Does 247URL support custom domains?','The deployment architecture supports a separate short domain. A self-service verification workflow is not implemented yet.'],['Is billing active?','No. The current release is self-hosted and has no payment processor or entitlement enforcement.'],['How do API tokens work?','Tokens have scoped link and analytics abilities, expire by default after 90 days, and are shown only once when created.']]
+const open = ref<number | null>(0)
+
+useHead({
+  script: [{
+    type: 'application/ld+json',
+    innerHTML: JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: items.map(([name, text]) => ({
+        '@type': 'Question',
+        name,
+        acceptedAnswer: { '@type': 'Answer', text },
+      })),
+    }),
+  }],
+})
 </script>
-<template><section class="container-shell py-20"><div class="mx-auto max-w-4xl"><p class="eyebrow">FAQ</p><h1 class="mt-4 text-4xl font-black sm:text-6xl">Straight answers about every redirect.</h1><div class="mt-12 grid gap-4"><details v-for="faq in faqs" :key="faq[0]" class="surface group p-6"><summary class="cursor-pointer list-none text-lg font-bold">{{ faq[0] }}<span class="float-right text-teal-300 group-open:rotate-45">+</span></summary><p class="mt-4 leading-7 text-slate-400">{{ faq[1] }}</p></details></div></div></section></template>
+<template><section class="container-shell grid gap-12 py-20 lg:grid-cols-[.75fr_1.25fr]"><div><p class="eyebrow">Support</p><h1 class="mt-3 text-5xl font-bold tracking-[-0.035em]">Frequently asked questions.</h1><p class="mt-5 text-base text-text-secondary">Clear answers about how the current product works. Still need help? <NuxtLink to="/contact" class="text-brand">Contact us.</NuxtLink></p></div><div class="divide-y divide-border border-y border-border"><div v-for="(item,i) in items" :key="item[0]"><button class="flex w-full items-center justify-between gap-4 py-4 text-left text-sm font-medium" :aria-expanded="open===i" @click="open=open===i?null:i"><span>{{ item[0] }}</span><span class="text-text-muted">{{ open===i?'−':'+' }}</span></button><p v-if="open===i" class="pb-4 text-sm leading-relaxed text-text-secondary">{{ item[1] }}</p></div></div></section></template>

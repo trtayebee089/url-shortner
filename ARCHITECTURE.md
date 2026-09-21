@@ -87,13 +87,13 @@ Email verification gates dashboard resources. Password reset responses do not re
 - At roughly 100 to 10,000 links, this architecture is intentionally simple: indexed MySQL, Redis lookup cache, and one or more queue workers.
 - Around one million links, use cursor pagination for bulk consumers, replicas for reporting, capacity-test Redis/MySQL, and scale stateless redirect nodes and analytics workers by latency and queue depth.
 - At tens or hundreds of millions of clicks, partition/export the event table and consider a dedicated analytics store such as ClickHouse or BigQuery. Kafka or another durable event bus becomes appropriate when losing analytics during a Redis outage is no longer acceptable. The redirect source of truth remains MySQL unless a separately engineered edge store is introduced.
-- Dashboard analytics reads daily aggregates rather than rescanning the full raw event history.
+- Dashboard timelines and totals read daily aggregates rather than rescanning raw event history. Bounded referrer/device/browser/OS/country dimensions are ownership-filtered against raw events inside the configured retention window.
 - A separate short domain requires only DNS, Nginx routing, `SHORT_URL_DOMAIN`, and allowed-origin changes.
 - A future billing module can attach plans/usage to users without changing link ownership or redirect resolution.
 
 ## Nginx ownership
 
-- `/{3-64 character code}` goes directly to Laravel/PHP-FPM and is never edge-cached.
+- Known single-segment Nuxt routes are matched before the constrained short-code regex. Every other `/{3-64 character code}` goes directly to Laravel/PHP-FPM and is never edge-cached.
 - `/api/v1/*` on the API hostname goes to Laravel. On the main hostname, `/api/session/*` and `/api/backend/*` go to Nuxt's same-origin BFF.
 - `/dashboard/*`, authentication screens, legal pages, and marketing pages go to Nuxt SSR.
 - `/_nuxt/*` is the only long-lived public immutable cache location.

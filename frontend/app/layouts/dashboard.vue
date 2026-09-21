@@ -1,5 +1,2 @@
-<script setup lang="ts">
-useSeoMeta({ robots: 'noindex, nofollow' })
-</script>
-
-<template><div class="min-h-screen lg:flex"><DashboardSidebar /><main class="min-w-0 flex-1 p-5 sm:p-8 lg:p-10"><slot /></main></div></template>
+<script setup lang="ts">useSeoMeta({ robots: 'noindex, nofollow' }); const open = ref(false)</script>
+<template><div class="flex h-screen overflow-hidden bg-canvas"><div class="hidden shrink-0 md:block"><DashboardSidebar /></div><header class="fixed inset-x-0 top-0 z-30 flex h-12 items-center justify-between border-b border-border bg-surface px-4 md:hidden"><AppLogo size="sm"/><button type="button" class="grid size-8 place-items-center text-text-secondary" aria-label="Open navigation" @click="open = true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button></header><div v-if="open" class="fixed inset-0 z-40 bg-text-primary/20 md:hidden" @click="open = false"/><div v-if="open" class="fixed inset-y-0 left-0 z-50 shadow-lg md:hidden"><DashboardSidebar mobile @close="open = false"/></div><main class="min-w-0 flex-1 overflow-y-auto pt-12 md:pt-0"><slot /></main></div></template>

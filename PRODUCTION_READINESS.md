@@ -12,6 +12,7 @@ This document records the operator checks that cannot be proven solely by a sour
 - Analytics/privacy: set a dedicated HMAC key and retention; document purposes; keep raw IPs out; enable location only when justified; prune raw events and daily visitor hashes.
 - Abuse: configure anonymous limits, blocked domains, moderation ownership, incident contacts, and an edge bot challenge escalation path.
 - SEO: verify production canonical/OG URLs, SSR output, robots/sitemap, and noindex headers on auth/dashboard pages.
+- UI: review the 390px, 768px, 1280px, and 1440px layouts against `Design Inspiration/`; verify real account data, resource routes, empty/error/loading states, and keyboard navigation.
 - Deployment: validate Nginx syntax and TLS chain on the target; run PHP-FPM/Nuxt as restricted users; configure log rotation, backups, health checks, Supervisor/systemd, scheduler, and zero-downtime worker restart.
 - Observability: alert on redirect 5xx/latency, authentication/rate-limit anomalies, Redis/MySQL failures, queue failures/depth, disk, certificate expiry, and backup failures. Never ingest credentials or raw authorization headers.
 

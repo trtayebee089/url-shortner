@@ -19,6 +19,7 @@ Core resources:
 - `POST /public/links` (configuration-dependent anonymous creation)
 - `GET|POST /links`
 - `GET|PATCH|DELETE /links/{id}`
+- `GET /analytics?period=7d|30d|90d` (account-wide owned-link aggregates)
 - `GET /links/{id}/analytics?period=7d|30d|90d`
 - `GET /links/{id}/qr`
 - `PATCH /profile`, `PUT /profile/password`

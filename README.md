@@ -19,6 +19,8 @@ API.md
 SECURITY.md
 ```
 
+The implemented UI follows the light 247URL design source in `Design Inspiration/`; route-by-route references, API contracts, truthful feature boundaries, and responsive behavior are recorded in `DESIGN_TO_CODE.md`.
+
 ## Docker development
 
 1. Copy `.env.example` to `.env`, `backend/.env.example` to `backend/.env`, and `frontend/.env.example` to `frontend/.env`.

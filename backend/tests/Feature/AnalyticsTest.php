@@ -33,6 +33,23 @@ class AnalyticsTest extends TestCase
         $this->getJson("/api/v1/links/{$link->id}/analytics?period=7d")->assertOk()->assertJsonPath('data.period', '7d')->assertJsonCount(7, 'data.timeline');
     }
 
+    public function test_account_analytics_aggregates_only_the_authenticated_users_links(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $owned = Link::factory()->for($user)->create();
+        $other = Link::factory()->create();
+        (new RecordLinkClick($owned->id, $this->context()))->handle();
+        (new RecordLinkClick($other->id, [...$this->context(), 'event_id' => (string) Str::uuid()]))->handle();
+        Sanctum::actingAs($user, ['*']);
+
+        $this->getJson('/api/v1/analytics?period=7d')
+            ->assertOk()
+            ->assertJsonPath('data.period', '7d')
+            ->assertJsonPath('data.total_clicks', 1)
+            ->assertJsonPath('data.unique_clicks', 1)
+            ->assertJsonCount(7, 'data.timeline');
+    }
+
     public function test_qr_endpoint_returns_svg(): void
     {
         $user = User::factory()->create(['email_verified_at' => now()]);

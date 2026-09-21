@@ -1,0 +1,10 @@
+{
+  "description": "Easily shorten and manage URLs with advanced analytics and customizable options, designed for businesses seeking fast, reliable link management.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -27,6 +27,18 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # Resolve known single-segment Nuxt routes before treating a path as a short code.
+    location ~ ^/(?:features|pricing|resources|faq|about|contact|privacy|terms|login|register|forgot-password|reset-password|verify-email|robots\.txt|sitemap\.xml)/?$ {
+        proxy_pass http://nuxt_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 3s;
+        proxy_read_timeout 30s;
+    }
+
     location ~ ^/[A-Za-z0-9_-]{3,64}$ {
         include fastcgi_params;
         fastcgi_param SCRIPT_FILENAME /var/www/247url/backend/public/index.php;

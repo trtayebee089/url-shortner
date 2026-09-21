@@ -13,7 +13,7 @@ export default defineEventHandler((event) => {
   if (path.startsWith('/api/')) {
     setResponseHeader(event, 'Cache-Control', 'private, no-store')
   }
-  if (/^\/(dashboard(?:\/|$)|login$|register$|forgot-password$|reset-password$)/.test(path)) {
+  if (/^\/(dashboard(?:\/|$)|login$|register$|forgot-password$|reset-password$|verify-email$)/.test(path)) {
     setResponseHeader(event, 'X-Robots-Tag', 'noindex, nofollow')
   }
 
