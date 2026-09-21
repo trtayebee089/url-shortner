@@ -1,0 +1,2 @@
+<script setup lang="ts">defineProps<{ title: string; message: string }>()</script>
+<template><div class="surface px-6 py-14 text-center"><div class="mx-auto grid size-12 place-items-center rounded-2xl bg-teal-300/10 text-xl text-teal-300">↗</div><h2 class="mt-5 text-xl font-bold">{{ title }}</h2><p class="mx-auto mt-2 max-w-md text-slate-400">{{ message }}</p><div class="mt-6"><slot /></div></div></template>

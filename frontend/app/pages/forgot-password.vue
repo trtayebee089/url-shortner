@@ -1,0 +1,6 @@
+<script setup lang="ts">
+useSeoPage('Reset your password', 'Request a secure password reset link.', '/forgot-password')
+const email = ref(''); const sent = ref(false); const error = ref(''); const loading = ref(false)
+async function submit() { loading.value = true; error.value = ''; try { await $fetch('/api/backend/auth/forgot-password', { method: 'POST', body: { email: email.value } }); sent.value = true } catch (e: any) { error.value = e?.data?.message || 'Unable to send the reset email.' } finally { loading.value = false } }
+</script>
+<template><section class="container-shell py-20"><div class="surface mx-auto max-w-md p-8"><h1 class="text-3xl font-black">Reset your password</h1><p class="mt-3 text-slate-400">Enter your email and we’ll send reset instructions if an account exists.</p><p v-if="sent" class="mt-6 rounded-xl bg-teal-300/10 p-4 text-teal-200" role="status">Check your inbox for the reset link.</p><form v-else class="mt-7 grid gap-4" @submit.prevent="submit"><label class="label" for="email">Email</label><input id="email" v-model="email" class="input" type="email" required autocomplete="email"><p v-if="error" class="text-sm text-rose-300">{{ error }}</p><button class="btn-primary" :disabled="loading">{{ loading ? 'Sending…' : 'Send reset link' }}</button></form></div></section></template>

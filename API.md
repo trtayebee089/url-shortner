@@ -1,0 +1,30 @@
+# API
+
+The authoritative OpenAPI 3.1 document is [`backend/public/openapi.yaml`](backend/public/openapi.yaml). In production it can be served from `https://api.example.com/openapi.yaml` and imported into Swagger UI, Redoc, Postman, or an SDK generator.
+
+All application endpoints are versioned below `/api/v1`. Authenticated calls use:
+
+```http
+Authorization: Bearer <sanctum-token>
+Accept: application/json
+```
+
+Successful mutation responses use `{ "data": ..., "message": "..." }`. Laravel validation responses use status `422` with `message` and field-keyed `errors`. `401`, `403`, `404`, `410`, and `429` retain their standard meanings.
+
+Core resources:
+
+- `POST /auth/register`, `/auth/login`, `/auth/logout`
+- `POST /auth/forgot-password`, `/auth/reset-password`
+- `GET /auth/me`
+- `POST /public/links` (configuration-dependent anonymous creation)
+- `GET|POST /links`
+- `GET|PATCH|DELETE /links/{id}`
+- `GET /links/{id}/analytics?period=7d|30d|90d`
+- `GET /links/{id}/qr`
+- `PATCH /profile`, `PUT /profile/password`
+- `GET|POST /api-tokens`, `DELETE /api-tokens/{id}`
+- `POST /abuse-reports`
+
+Admin-only routes live under `/api/v1/admin` and require both Sanctum authentication and the `admin` role.
+
+Browser traffic uses the Nuxt same-origin BFF; the browser never receives the Sanctum token. Direct integrations use expiring bearer tokens with `links:read`, `links:write`, and `analytics:read` only. Those tokens cannot manage profile credentials, mint more tokens, or access administration. Production CORS must list exact frontend origins and must not use a wildcard when credentials are enabled.

@@ -1,0 +1,9 @@
+<script setup lang="ts">
+import type { ApiEnvelope, LinkRecord } from '~/types/api'
+definePageMeta({ layout: 'dashboard', middleware: 'auth' })
+const route = useRoute(); const { update } = useLinks(); const saved = ref(false); const error = ref('')
+const { data, pending } = await useFetch<ApiEnvelope<LinkRecord>>(`/api/backend/links/${route.params.id}`)
+useSeoPage('Edit link', 'Update your short link destination and settings.', `/dashboard/links/${route.params.id}`)
+async function submit(payload: Record<string, unknown>) { try { const response = await update(Number(route.params.id), payload); if (data.value) data.value.data = response.data; saved.value = true; setTimeout(() => saved.value = false, 2000) } catch (e: any) { error.value = Object.values(e?.data?.errors || {}).flat().join(' ') || e?.data?.message || 'Unable to save changes.' } }
+</script>
+<template><div class="mx-auto max-w-3xl"><NuxtLink to="/dashboard/links" class="text-sm text-teal-300">← Back to links</NuxtLink><div v-if="pending" class="mt-7"><LoadingState/></div><template v-else-if="data"><div class="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><h1 class="text-3xl font-black">{{ data.data.title || data.data.short_code }}</h1><a :href="data.data.short_url" target="_blank" class="mt-2 block text-teal-300">{{ data.data.short_url }}</a></div><div class="flex gap-2"><CopyButton :text="data.data.short_url"/><NuxtLink :to="`/dashboard/links/${data.data.id}/analytics`" class="btn-secondary">Analytics</NuxtLink></div></div><p v-if="saved" class="mt-5 rounded-xl bg-teal-300/10 p-4 text-teal-200" role="status">Changes saved.</p><p v-if="error" class="mt-5 rounded-xl bg-rose-400/10 p-4 text-rose-300" role="alert">{{ error }}</p><LinkForm :key="data.data.updated_at" class="mt-7" :link="data.data" @submit="submit"/></template></div></template>

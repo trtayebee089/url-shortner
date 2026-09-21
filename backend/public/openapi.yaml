@@ -1,0 +1,391 @@
+openapi: 3.1.0
+info:
+  title: 247URL API
+  version: 1.1.0
+  description: Versioned API for authentication, link management, analytics, QR codes, moderation, and account management.
+  license: { name: MIT, identifier: MIT }
+servers:
+  - url: /api/v1
+    description: Same-host API base
+tags:
+  - name: Authentication
+    description: Registration, tokens, verification, and password recovery
+  - name: Links
+    description: Short-link lifecycle and QR codes
+  - name: Analytics
+    description: Privacy-limited link analytics
+  - name: Account
+    description: Profile and API token management
+  - name: Moderation
+    description: Abuse reporting and administrator operations
+security: [{ sanctum: [] }]
+paths:
+  /auth/register:
+    post:
+      operationId: register
+      tags: [Authentication]
+      security: []
+      summary: Register a user and issue a short-lived verification-session token
+      requestBody: { $ref: '#/components/requestBodies/Register' }
+      responses:
+        '201': { description: Account created, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/login:
+    post:
+      operationId: login
+      tags: [Authentication]
+      security: []
+      summary: Issue an expiring Sanctum bearer token
+      requestBody: { $ref: '#/components/requestBodies/Login' }
+      responses:
+        '200': { description: Authenticated, content: { application/json: { schema: { $ref: '#/components/schemas/AuthResponse' } } } }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Authentication]
+      summary: Return the current user
+      responses:
+        '200': { description: Current user, content: { application/json: { schema: { $ref: '#/components/schemas/UserResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [Authentication]
+      summary: Revoke the current bearer token
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/forgot-password:
+    post:
+      operationId: requestPasswordReset
+      tags: [Authentication]
+      security: []
+      summary: Request a neutral password-reset response
+      requestBody: { $ref: '#/components/requestBodies/Email' }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [Authentication]
+      security: []
+      summary: Reset a password and revoke existing tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, email, password, password_confirmation]
+              properties:
+                token: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+                password_confirmation: { type: string, format: password }
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/email/verification-notification:
+    post:
+      operationId: resendVerification
+      tags: [Authentication]
+      summary: Resend email verification for an active account
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /public/links:
+    post:
+      operationId: createAnonymousLink
+      tags: [Links]
+      security: []
+      summary: Create an anonymous short link when enabled
+      requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
+      responses:
+        '201': { $ref: '#/components/responses/LinkCreated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [Analytics]
+      summary: Get owned-link totals and recent/top links
+      responses:
+        '200': { description: Dashboard statistics }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /links:
+    get:
+      operationId: listLinks
+      tags: [Links]
+      summary: List owned links
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string, enum: [active, disabled, expired] } }
+        - { name: sort, in: query, schema: { type: string, enum: [created_at, clicks_count, title, expires_at] } }
+        - { name: direction, in: query, schema: { type: string, enum: [asc, desc] } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: per_page, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses:
+        '200': { description: Paginated links }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      operationId: createLink
+      tags: [Links]
+      summary: Create an owned link
+      requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
+      responses:
+        '201': { $ref: '#/components/responses/LinkCreated' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /links/{id}:
+    parameters: [{ $ref: '#/components/parameters/LinkId' }]
+    get:
+      operationId: getLink
+      tags: [Links]
+      summary: Get an owned link
+      responses:
+        '200': { description: Link, content: { application/json: { schema: { $ref: '#/components/schemas/LinkResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      operationId: updateLink
+      tags: [Links]
+      summary: Update an owned link and invalidate redirect cache
+      requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/LinkResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    put:
+      operationId: replaceLink
+      tags: [Links]
+      summary: Update an owned link using the same partial-update contract
+      requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/LinkResponse' } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+    delete:
+      operationId: deleteLink
+      tags: [Links]
+      summary: Delete an owned link and its analytics
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /links/{id}/analytics:
+    get:
+      operationId: getLinkAnalytics
+      tags: [Analytics]
+      summary: Get owned-link analytics
+      parameters:
+        - { $ref: '#/components/parameters/LinkId' }
+        - { name: period, in: query, schema: { type: string, enum: [7d, 30d, 90d], default: 30d } }
+      responses:
+        '200': { description: Timeline and bounded aggregate dimensions }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /links/{id}/qr:
+    get:
+      operationId: getLinkQr
+      tags: [Links]
+      summary: Generate an SVG QR code for an owned link
+      parameters: [{ $ref: '#/components/parameters/LinkId' }]
+      responses:
+        '200': { description: SVG document, content: { image/svg+xml: { schema: { type: string } } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /abuse-reports:
+    post:
+      operationId: createAbuseReport
+      tags: [Moderation]
+      security: []
+      summary: Submit a rate-limited abuse report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [short_code, reason]
+              properties:
+                short_code: { type: string, maxLength: 64 }
+                reporter_email: { type: [string, 'null'], format: email }
+                reason: { type: string, enum: [malware, phishing, spam, illegal, other] }
+                details: { type: [string, 'null'], maxLength: 2000 }
+      responses:
+        '201': { $ref: '#/components/responses/Success' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /profile:
+    patch:
+      operationId: updateProfile
+      tags: [Account]
+      summary: Update name and email; account-management ability required
+      responses:
+        '200': { description: Profile updated }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /profile/password:
+    put:
+      operationId: updatePassword
+      tags: [Account]
+      summary: Update password and revoke other tokens
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api-tokens:
+    get:
+      operationId: listApiTokens
+      tags: [Account]
+      summary: List token metadata; account-management ability required
+      responses:
+        '200': { description: Tokens without token hashes }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      operationId: createApiToken
+      tags: [Account]
+      summary: Create a scoped, expiring API token
+      responses:
+        '201': { description: Plain-text token returned once }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+  /api-tokens/{token}:
+    delete:
+      operationId: revokeApiToken
+      tags: [Account]
+      summary: Revoke an owned API token
+      parameters: [{ name: token, in: path, required: true, schema: { type: integer } }]
+      responses:
+        '200': { $ref: '#/components/responses/Success' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [Moderation]
+      summary: System totals; admin role and admin token ability required
+      responses:
+        '200': { description: System statistics }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [Moderation]
+      summary: Paginated users for administrators
+      responses:
+        '200': { description: Paginated users }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/links:
+    get:
+      operationId: listAdminLinks
+      tags: [Moderation]
+      summary: Paginated links for administrators
+      responses:
+        '200': { description: Paginated links }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/abuse-reports:
+    get:
+      operationId: listAdminAbuseReports
+      tags: [Moderation]
+      summary: Paginated abuse reports for administrators
+      responses:
+        '200': { description: Paginated abuse reports }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/links/{id}/disable:
+    post:
+      operationId: disableLinkAsAdmin
+      tags: [Moderation]
+      summary: Disable a link, invalidate cache, and emit an audit log
+      parameters: [{ $ref: '#/components/parameters/LinkId' }]
+      responses:
+        '200': { description: Link disabled }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    sanctum: { type: http, scheme: bearer, bearerFormat: Sanctum }
+  parameters:
+    LinkId: { name: id, in: path, required: true, schema: { type: integer, minimum: 1 } }
+  requestBodies:
+    Register:
+      required: true
+      content: { application/json: { schema: { $ref: '#/components/schemas/RegisterRequest' } } }
+    Login:
+      required: true
+      content: { application/json: { schema: { type: object, required: [email, password], properties: { email: { type: string, format: email }, password: { type: string, format: password }, remember: { type: boolean }, device_name: { type: string, maxLength: 100 } } } } }
+    Email:
+      required: true
+      content: { application/json: { schema: { type: object, required: [email], properties: { email: { type: string, format: email } } } } }
+    LinkWrite:
+      required: true
+      content: { application/json: { schema: { $ref: '#/components/schemas/LinkWrite' } } }
+  responses:
+    Success: { description: Successful operation }
+    LinkCreated: { description: Link created, content: { application/json: { schema: { $ref: '#/components/schemas/LinkResponse' } } } }
+    Unauthorized: { description: Authentication required }
+    Forbidden: { description: Authenticated but not permitted }
+    NotFound: { description: Resource not found }
+    RateLimited: { description: Rate limit exceeded }
+    ValidationError:
+      description: Validation failed
+      content: { application/json: { schema: { $ref: '#/components/schemas/ValidationError' } } }
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password, password_confirmation]
+      properties: { name: { type: string, maxLength: 120 }, email: { type: string, format: email }, password: { type: string, format: password }, password_confirmation: { type: string, format: password } }
+    AuthResponse:
+      type: object
+      properties: { data: { type: object, properties: { user: { $ref: '#/components/schemas/User' }, token: { type: string, description: Returned only by the Laravel API; the Nuxt BFF stores it in an HTTP-only cookie. } } }, message: { type: string } }
+    UserResponse:
+      type: object
+      properties: { data: { $ref: '#/components/schemas/User' } }
+    User:
+      type: object
+      properties: { id: { type: integer }, name: { type: string }, email: { type: string, format: email }, email_verified_at: { type: [string, 'null'], format: date-time }, role: { type: string }, status: { type: string } }
+    LinkWrite:
+      type: object
+      properties: { destination_url: { type: string, format: uri, maxLength: 4096 }, custom_alias: { type: [string, 'null'], minLength: 3, maxLength: 64, pattern: '^[A-Za-z0-9_-]+$' }, title: { type: [string, 'null'], maxLength: 160 }, description: { type: [string, 'null'], maxLength: 2000 }, is_active: { type: boolean }, expires_at: { type: [string, 'null'], format: date-time }, tags: { type: array, maxItems: 10, items: { type: string, maxLength: 60 } } }
+    Link:
+      allOf:
+        - { $ref: '#/components/schemas/LinkWrite' }
+        - { type: object, required: [id, short_code, short_url, destination_url], properties: { id: { type: integer }, short_code: { type: string }, short_url: { type: string, format: uri }, clicks_count: { type: integer }, is_expired: { type: boolean }, created_at: { type: string, format: date-time }, updated_at: { type: string, format: date-time } } }
+    LinkResponse:
+      type: object
+      properties: { data: { $ref: '#/components/schemas/Link' }, message: { type: string } }
+    ValidationError:
+      type: object
+      properties: { message: { type: string, example: Validation failed }, errors: { type: object, additionalProperties: { type: array, items: { type: string } } } }
