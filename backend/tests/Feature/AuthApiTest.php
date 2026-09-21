@@ -59,6 +59,17 @@ class AuthApiTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
+    public function test_invalid_and_expired_email_verification_links_are_rejected(): void
+    {
+        $user = User::factory()->unverified()->create();
+        $wrongHashUrl = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), ['id' => $user->id, 'hash' => sha1('wrong@example.com')]);
+        $expiredUrl = URL::temporarySignedRoute('verification.verify', now()->subMinute(), ['id' => $user->id, 'hash' => sha1($user->email)]);
+
+        $this->get($wrongHashUrl)->assertForbidden();
+        $this->get($expiredUrl)->assertForbidden();
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
     public function test_password_reset_request_is_neutral_for_unknown_accounts(): void
     {
         $this->postJson('/api/v1/auth/forgot-password', ['email' => 'missing@example.com'])
@@ -81,5 +92,34 @@ class AuthApiTest extends TestCase
 
         $this->assertTrue(Hash::check('NewSecurePass!123', $user->fresh()->password));
         $this->assertSame(0, $user->tokens()->count());
+    }
+
+    public function test_invalid_and_expired_password_reset_tokens_are_rejected(): void
+    {
+        config()->set('auth.passwords.users.expire', 1);
+        $user = User::factory()->create(['email' => 'expired-reset@example.com']);
+        $payload = [
+            'email' => $user->email,
+            'password' => 'NewSecurePass!123',
+            'password_confirmation' => 'NewSecurePass!123',
+        ];
+
+        $this->postJson('/api/v1/auth/reset-password', [...$payload, 'token' => 'invalid'])->assertUnprocessable();
+
+        $token = Password::createToken($user);
+        $this->travel(2)->minutes();
+        $this->postJson('/api/v1/auth/reset-password', [...$payload, 'token' => $token])->assertUnprocessable();
+    }
+
+    public function test_logout_revokes_only_the_current_persisted_token(): void
+    {
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        $current = $user->createToken('current', ['*']);
+        $other = $user->createToken('other', ['*']);
+
+        $this->withToken($current->plainTextToken)->postJson('/api/v1/auth/logout')->assertOk();
+
+        $this->assertDatabaseMissing('personal_access_tokens', ['id' => $current->accessToken->id]);
+        $this->assertDatabaseHas('personal_access_tokens', ['id' => $other->accessToken->id]);
     }
 }

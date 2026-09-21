@@ -30,6 +30,19 @@ class RedirectTest extends TestCase
         $this->assertEmpty($this->get('/Ab12Cd')->headers->getCookies());
     }
 
+    public function test_incoming_query_parameters_are_appended_before_the_destination_fragment(): void
+    {
+        Queue::fake();
+        Link::factory()->create([
+            'short_code' => 'Query01',
+            'destination_url' => 'https://example.com/path?existing=1#details',
+        ]);
+
+        $this->get('/Query01?utm_source=test&term=a%20b')
+            ->assertRedirect('https://example.com/path?existing=1&term=a%20b&utm_source=test#details')
+            ->assertStatus(302);
+    }
+
     public function test_missing_disabled_and_expired_links_are_handled(): void
     {
         $this->get('/Missing')->assertNotFound();

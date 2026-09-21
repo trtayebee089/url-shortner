@@ -37,7 +37,10 @@ class RecordLinkClick implements ShouldQueue
 
         $clickedAt = now()->parse($clickedAtValue);
         $userAgent = $this->context['user_agent'] ?? '';
-        $destinationQuery = parse_url($link->destination_url, PHP_URL_QUERY);
+        $analyticsDestination = is_string($this->context['destination_url'] ?? null)
+            ? $this->context['destination_url']
+            : $link->destination_url;
+        $destinationQuery = parse_url($analyticsDestination, PHP_URL_QUERY);
         parse_str(is_string($destinationQuery) ? $destinationQuery : '', $query);
         $utm = collect($query)
             ->only(['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'])

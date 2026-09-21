@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\RecordLinkClick;
 use App\Models\Link;
+use App\Models\LinkClick;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -14,6 +15,21 @@ use Tests\TestCase;
 class AnalyticsTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_incoming_short_url_utm_parameters_are_recorded(): void
+    {
+        $link = Link::factory()->create([
+            'short_code' => 'UtmPass',
+            'destination_url' => 'https://example.com/path?existing=1',
+        ]);
+
+        $this->get('/UtmPass?utm_source=short-url&utm_campaign=launch')->assertRedirect();
+
+        $this->assertDatabaseHas('link_clicks', ['link_id' => $link->id]);
+        $utm = LinkClick::whereBelongsTo($link)->firstOrFail()->utm;
+        $this->assertSame('short-url', $utm['utm_source']);
+        $this->assertSame('launch', $utm['utm_campaign']);
+    }
 
     public function test_click_job_records_privacy_limited_event_and_aggregates(): void
     {

@@ -31,7 +31,41 @@ class RateLimitTest extends TestCase
         $this->postJson('/api/v1/auth/login', [
             'email' => 'limited@example.com',
             'password' => 'incorrect',
-        ])->assertTooManyRequests();
+        ])->assertTooManyRequests()->assertHeader('Retry-After');
+    }
+
+    public function test_registration_and_password_reset_rate_limits_are_applied(): void
+    {
+        config()->set('shortener.rate_limits.auth', 1);
+        $registration = [
+            'name' => 'Limited User',
+            'email' => 'register-limited@example.com',
+            'password' => 'SecurePass!123',
+            'password_confirmation' => 'SecurePass!123',
+        ];
+        $this->postJson('/api/v1/auth/register', $registration)->assertCreated();
+        $this->postJson('/api/v1/auth/register', $registration)->assertTooManyRequests()->assertHeader('Retry-After');
+
+        config()->set('shortener.rate_limits.password_reset', 1);
+        $payload = ['email' => 'reset-limited@example.com'];
+        $this->postJson('/api/v1/auth/forgot-password', $payload)->assertOk();
+        $this->postJson('/api/v1/auth/forgot-password', $payload)->assertTooManyRequests()->assertHeader('Retry-After');
+    }
+
+    public function test_authenticated_creation_and_global_api_rate_limits_are_applied(): void
+    {
+        config()->set('shortener.rate_limits.authenticated_create', 1);
+        $user = User::factory()->create(['email_verified_at' => now()]);
+        Sanctum::actingAs($user, ['*']);
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/one'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/two'])->assertTooManyRequests()->assertHeader('Retry-After');
+
+        $this->app['auth']->forgetGuards();
+        config()->set('shortener.rate_limits.api', 1);
+        $apiUser = User::factory()->create(['email_verified_at' => now()]);
+        Sanctum::actingAs($apiUser, ['*']);
+        $this->getJson('/api/v1/links')->assertOk();
+        $this->getJson('/api/v1/links')->assertTooManyRequests()->assertHeader('Retry-After');
     }
 
     public function test_analytics_rate_limit_is_applied_per_authenticated_user(): void
@@ -53,6 +87,6 @@ class RateLimitTest extends TestCase
 
         $this->postJson('/api/v1/abuse-reports', $payload)->assertCreated();
         $this->postJson('/api/v1/abuse-reports', $payload)->assertCreated();
-        $this->postJson('/api/v1/abuse-reports', $payload)->assertTooManyRequests();
+        $this->postJson('/api/v1/abuse-reports', $payload)->assertTooManyRequests()->assertHeader('Retry-After');
     }
 }

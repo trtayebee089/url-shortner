@@ -47,10 +47,13 @@ class RedirectService
             return ['state' => 'expired'];
         }
 
+        $destinationUrl = $this->appendRequestQuery($metadata['destination_url'], $request->getQueryString());
+
         try {
             RecordLinkClick::dispatch($metadata['id'], [
                 'event_id' => (string) Str::uuid(),
                 'clicked_at' => now()->toIso8601String(),
+                'destination_url' => $destinationUrl,
                 'visitor_hash' => hash_hmac('sha256', ($request->ip() ?? '').'|'.($request->userAgent() ?? '').'|'.now()->toDateString(), (string) config('shortener.analytics_hash_key')),
                 'user_agent' => Str($request->userAgent())->limit(500)->toString(),
                 'referer' => Str($request->headers->get('referer'))->limit(2048)->toString(),
@@ -62,7 +65,21 @@ class RedirectService
             report($exception);
         }
 
-        return ['state' => 'ok', 'destination_url' => $metadata['destination_url']];
+        return ['state' => 'ok', 'destination_url' => $destinationUrl];
+    }
+
+    private function appendRequestQuery(string $destination, ?string $requestQuery): string
+    {
+        if ($requestQuery === null || $requestQuery === '') {
+            return $destination;
+        }
+
+        $fragmentPosition = strpos($destination, '#');
+        $fragment = $fragmentPosition === false ? '' : substr($destination, $fragmentPosition);
+        $base = $fragmentPosition === false ? $destination : substr($destination, 0, $fragmentPosition);
+        $separator = str_contains($base, '?') ? (str_ends_with($base, '?') || str_ends_with($base, '&') ? '' : '&') : '?';
+
+        return $base.$separator.$requestQuery.$fragment;
     }
 
     private function isValidMetadata(mixed $metadata): bool
