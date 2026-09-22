@@ -18,7 +18,7 @@ const frontendRoutes = new Set([
   'verify-email',
 ])
 
-export function getShortCodeProxyTarget(method: string, requestUrl: URL, apiBase: string): string | null {
+export function getShortCodeRedirectTarget(method: string, requestUrl: URL, apiBase: string): string | null {
   if (method !== 'GET' && method !== 'HEAD') return null
 
   const match = requestUrl.pathname.match(/^\/([^/]+)$/)

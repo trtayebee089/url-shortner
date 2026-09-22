@@ -94,7 +94,7 @@ Email verification gates dashboard resources. Password reset responses do not re
 ## Nginx ownership
 
 - Known single-segment Nuxt routes are matched before the constrained short-code regex. Every other `/{3-64 character code}` goes directly to Laravel/PHP-FPM and is never edge-cached.
-- On managed Node hosting where the edge vhost cannot express that split, Nuxt's short-code server middleware transparently proxies only eligible single-segment `GET`/`HEAD` requests to Laravel. Laravel still owns lookup, analytics, and the final 302 response; named Nuxt routes are explicitly excluded.
+- On managed Node hosting where the edge vhost cannot express that split, Nuxt's short-code server middleware sends only eligible single-segment `GET`/`HEAD` requests to Laravel's redirect origin with a non-cacheable 302. Laravel still owns lookup, analytics, and the final destination response; named Nuxt routes are explicitly excluded.
 - `/api/v1/*` on the API hostname goes to Laravel. The main hostname does not expose or proxy Laravel API paths.
 - `/dashboard/*`, authentication screens, legal pages, and marketing pages go to Nuxt SSR.
 - `/_nuxt/*` is the only long-lived public immutable cache location.
