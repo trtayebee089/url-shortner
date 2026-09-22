@@ -14,7 +14,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nuxt/eslint": "^1.17.0",
     "eslint": "^10.4.0",
     "eslint-plugin-vue": "^10.11.0",
     "happy-dom": "^20.14.5",
