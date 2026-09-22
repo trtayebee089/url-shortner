@@ -101,18 +101,6 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '429': { $ref: '#/components/responses/RateLimited' }
-  /public/links:
-    post:
-      operationId: createAnonymousLink
-      tags: [Links]
-      security: []
-      summary: Create an anonymous short link when enabled
-      requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
-      responses:
-        '201': { $ref: '#/components/responses/LinkCreated' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '422': { $ref: '#/components/responses/ValidationError' }
-        '429': { $ref: '#/components/responses/RateLimited' }
   /dashboard:
     get:
       operationId: getDashboard
@@ -153,7 +141,8 @@ paths:
     post:
       operationId: createLink
       tags: [Links]
-      summary: Create an owned link
+      security: [{ sanctum: [] }, {}]
+      summary: Create an anonymous link when enabled or an owned link when authenticated
       requestBody: { $ref: '#/components/requestBodies/LinkWrite' }
       responses:
         '201': { $ref: '#/components/responses/LinkCreated' }

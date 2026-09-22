@@ -16,8 +16,8 @@ Core resources:
 - `POST /auth/register`, `/auth/login`, `/auth/logout`
 - `POST /auth/forgot-password`, `/auth/reset-password`
 - `GET /auth/me`
-- `POST /public/links` (configuration-dependent anonymous creation)
-- `GET|POST /links`
+- `POST /links` (anonymous when enabled; authenticated requests create an owned link)
+- `GET /links`
 - `GET|PATCH|DELETE /links/{id}`
 - `GET /analytics?period=7d|30d|90d` (account-wide owned-link aggregates)
 - `GET /links/{id}/analytics?period=7d|30d|90d`

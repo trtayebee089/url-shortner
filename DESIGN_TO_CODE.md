@@ -4,7 +4,7 @@ The React/Vite project in `Design Inspiration/` is the visual source of truth. I
 
 | Page | Design reference | Nuxt route | Existing implementation | Required implementation | Main components | Laravel API | Responsive notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Home | `HomePage.tsx` | `/` | Functional dark shortener | Editorial hero, real shortener success/error/QR, product preview, trust, features, FAQ, CTA | `AppHeader`, `UrlShortenerForm`, charts, accordion, `AppFooter` | `POST /api/v1/public/links` or authenticated `POST /api/v1/links` | Horizontal form becomes stacked; preview metrics become a compact grid |
+| Home | `HomePage.tsx` | `/` | Functional dark shortener | Editorial hero, real shortener success/error/QR, product preview, trust, features, FAQ, CTA | `AppHeader`, `UrlShortenerForm`, charts, accordion, `AppFooter` | `POST /api/v1/links` for guest or authenticated creation | Horizontal form becomes stacked; preview metrics become a compact grid |
 | Features | `FeaturesPage.tsx` | `/features` | Small feature grid | Full product showcase and truthful capability matrix | Product previews, feature sections, charts, CTA | None (product links enter real flows) | Alternating sections collapse to one column |
 | Pricing | `PricingPage.tsx` | `/pricing` | Single self-hosted card | Three-plan reference layout, explicitly marked configurable/planned where billing is absent | Plan cards, billing toggle, comparison, FAQ | None; no payment API exists | Cards stack; comparison scrolls |
 | Resources | `ResourcesPage.tsx` | `/resources` | Missing | Searchable, filterable static content hub | `ResourceCard`, category tabs, search, CTA | None | Featured grid stacks; tabs scroll |

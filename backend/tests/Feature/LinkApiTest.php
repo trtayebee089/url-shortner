@@ -57,7 +57,7 @@ class LinkApiTest extends TestCase
         $generator->shouldReceive('generate')->twice()->andReturn('Taken01', 'Fresh01');
         $this->app->instance(ShortCodeGenerator::class, $generator);
 
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/retried'])
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/retried'])
             ->assertCreated()
             ->assertJsonPath('data.short_code', 'Fresh01');
     }
@@ -66,7 +66,7 @@ class LinkApiTest extends TestCase
     {
         config(['shortener.domain' => 'https://247.bd']);
 
-        $response = $this->postJson('/api/v1/public/links', [
+        $response = $this->postJson('/api/v1/links', [
             'destination_url' => 'https://example.com/canonical-target',
             'custom_alias' => 'mGnw4Cm',
         ]);
@@ -92,7 +92,7 @@ class LinkApiTest extends TestCase
     {
         $destination = 'https://例え.テスト/%E3%83%91%E3%82%B9?q=%E2%9C%93#section';
 
-        $this->postJson('/api/v1/public/links', ['destination_url' => $destination])
+        $this->postJson('/api/v1/links', ['destination_url' => $destination])
             ->assertCreated()
             ->assertJsonPath('data.destination_url', $destination);
     }
@@ -100,20 +100,20 @@ class LinkApiTest extends TestCase
     public function test_anonymous_creation_is_rate_limited(): void
     {
         config(['shortener.rate_limits.anonymous_create' => 2]);
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/one'])->assertCreated();
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/two'])->assertCreated();
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/three'])->assertStatus(429);
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/one'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/two'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/three'])->assertStatus(429);
     }
 
     public function test_malicious_protocols_and_embedded_credentials_are_rejected(): void
     {
         foreach (['javascript:alert(1)', 'JaVaScRiPt:alert(1)', 'data:text/html,test', 'file:///etc/passwd', 'ftp://example.com/file', "https://example.com/\r\nX-Test: injected", 'https://user:pass@example.com/path'] as $url) {
-            $response = $this->postJson('/api/v1/public/links', ['destination_url' => $url]);
+            $response = $this->postJson('/api/v1/links', ['destination_url' => $url]);
             $this->assertSame(422, $response->status(), "Unexpected status for URL: {$url}. Body: {$response->getContent()}");
             $response->assertJsonValidationErrors('destination_url');
         }
 
-        $this->postJson('/api/v1/public/links', ['destination_url' => ' https://example.com/path '])
+        $this->postJson('/api/v1/links', ['destination_url' => ' https://example.com/path '])
             ->assertCreated()
             ->assertJsonPath('data.destination_url', 'https://example.com/path')
             ->assertJsonPath('data.is_active', true)
@@ -124,7 +124,7 @@ class LinkApiTest extends TestCase
     {
         config(['shortener.rate_limits.anonymous_create' => 100]);
         foreach (['api', 'API', 'dashboard', 'login', 'register', 'admin', 'a b', 'slash/value', 'dot.value', '../admin', '<script>', 'ユニコード', str_repeat('a', 65)] as $alias) {
-            $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com', 'custom_alias' => $alias])
+            $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com', 'custom_alias' => $alias])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors('custom_alias');
         }
@@ -132,8 +132,8 @@ class LinkApiTest extends TestCase
 
     public function test_aliases_are_case_sensitive(): void
     {
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/upper', 'custom_alias' => 'CaseKey'])->assertCreated();
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/lower', 'custom_alias' => 'casekey'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/upper', 'custom_alias' => 'CaseKey'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/lower', 'custom_alias' => 'casekey'])->assertCreated();
         $this->get('/CaseKey')->assertRedirect('https://example.com/upper');
         $this->get('/casekey')->assertRedirect('https://example.com/lower');
     }
@@ -151,6 +151,27 @@ class LinkApiTest extends TestCase
     public function test_anonymous_creation_can_be_disabled(): void
     {
         config(['shortener.allow_anonymous' => false]);
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com'])->assertForbidden();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com'])->assertForbidden();
+    }
+
+    public function test_authenticated_creation_preserves_account_and_token_security(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['email_verified_at' => null]), ['*']);
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/unverified'])->assertForbidden();
+
+        $this->app['auth']->forgetGuards();
+        Sanctum::actingAs(User::factory()->create(['email_verified_at' => now(), 'status' => 'disabled']), ['*']);
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/disabled'])->assertForbidden();
+
+        $this->app['auth']->forgetGuards();
+        Sanctum::actingAs(User::factory()->create(['email_verified_at' => now()]), ['links:read']);
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/unscoped'])->assertForbidden();
+    }
+
+    public function test_invalid_bearer_token_is_not_downgraded_to_anonymous_creation(): void
+    {
+        $this->withToken('invalid-token')
+            ->postJson('/api/v1/links', ['destination_url' => 'https://example.com'])
+            ->assertUnauthorized();
     }
 }

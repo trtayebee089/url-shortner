@@ -30,8 +30,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.api'))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.auth'))->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
         RateLimiter::for('password-reset', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.password_reset'))->by(strtolower((string) $request->input('email')).'|'.$request->ip()));
-        RateLimiter::for('anonymous-create', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.anonymous_create'))->by($request->ip()));
-        RateLimiter::for('authenticated-create', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.authenticated_create'))->by($request->user()->id));
+        RateLimiter::for('link-create', fn (Request $request) => Limit::perMinute(config($request->user() ? 'shortener.rate_limits.authenticated_create' : 'shortener.rate_limits.anonymous_create'))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('analytics', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.analytics'))->by($request->user()->id));
         RateLimiter::for('abuse-reports', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.abuse_reports'))->by($request->ip()));
         RateLimiter::for('verification', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.verification'))->by($request->user()->id));

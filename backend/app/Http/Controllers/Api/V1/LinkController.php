@@ -31,16 +31,15 @@ class LinkController extends Controller
 
     public function store(StoreLinkRequest $request): JsonResponse
     {
-        $link = $this->shortener->create($request->validated(), $request->user());
+        $user = $request->user();
+        if ($user === null) {
+            abort_unless(config('shortener.allow_anonymous'), 403, 'Anonymous link creation is disabled.');
+        }
 
-        return response()->json(['data' => new LinkResource($link), 'message' => 'Short link created.'], 201);
-    }
-
-    public function storeAnonymous(StoreLinkRequest $request): JsonResponse
-    {
-        abort_unless(config('shortener.allow_anonymous'), 403, 'Anonymous link creation is disabled.');
-        $data = $request->safe()->only(['destination_url', 'custom_alias']);
-        $link = $this->shortener->create($data, null);
+        $data = $user === null
+            ? $request->safe()->only(['destination_url', 'custom_alias'])
+            : $request->validated();
+        $link = $this->shortener->create($data, $user);
 
         return response()->json(['data' => new LinkResource($link), 'message' => 'Short link created.'], 201);
     }

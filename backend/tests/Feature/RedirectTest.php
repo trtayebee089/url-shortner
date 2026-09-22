@@ -109,7 +109,7 @@ class RedirectTest extends TestCase
         Queue::fake();
         $this->get('/Future1')->assertNotFound();
         $this->assertTrue(Cache::has('short-link:Future1'));
-        $this->postJson('/api/v1/public/links', ['destination_url' => 'https://example.com/future', 'custom_alias' => 'Future1'])->assertCreated();
+        $this->postJson('/api/v1/links', ['destination_url' => 'https://example.com/future', 'custom_alias' => 'Future1'])->assertCreated();
 
         $this->get('/Future1')->assertRedirect('https://example.com/future');
     }
