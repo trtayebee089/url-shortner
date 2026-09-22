@@ -7,7 +7,7 @@ afterEach(() => vi.unstubAllGlobals())
 function setup(fetchImplementation: ReturnType<typeof vi.fn>) {
   vi.stubGlobal('useAuth', () => ({ user: { value: null } }))
   vi.stubGlobal('useToast', () => ({ show: vi.fn() }))
-  vi.stubGlobal('$fetch', fetchImplementation)
+  vi.stubGlobal('useApi', () => ({ request: fetchImplementation }))
   return mount(UrlShortenerForm, { global: { stubs: { CopyButton: true } } })
 }
 
@@ -18,7 +18,7 @@ describe('UrlShortenerForm', () => {
     await wrapper.get('#destination-url').setValue('https://example.com')
     await wrapper.get('#custom-alias').setValue('summer')
     await wrapper.get('form').trigger('submit')
-    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledWith('/api/backend/public/links', expect.objectContaining({ method: 'POST' })))
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledWith('public/links', expect.objectContaining({ method: 'POST' })))
     expect(wrapper.text()).toContain('https://247.test/summer')
   })
 

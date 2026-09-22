@@ -2,15 +2,15 @@ upstream nuxt_frontend { server 127.0.0.1:3000; keepalive 32; }
 
 server {
     listen 80;
-    server_name example.com www.example.com api.example.com;
+    server_name 247.bd www.247.bd api.247.bd;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name example.com;
-    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
+    server_name 247.bd;
+    ssl_certificate /etc/letsencrypt/live/247.bd/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/247.bd/privkey.pem;
     client_max_body_size 2m;
 
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
@@ -18,7 +18,7 @@ server {
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'" always;
+    add_header Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.247.bd" always;
 
     location ^~ /_nuxt/ {
         proxy_pass http://nuxt_frontend;
@@ -54,7 +54,10 @@ server {
         fastcgi_hide_header X-Powered-By;
     }
 
-    # Nuxt owns marketing, dashboard, and same-origin BFF routes under /api/.
+    # Laravel API requests belong on api.247.bd, never the frontend origin.
+    location ^~ /api/ { return 404; }
+
+    # Nuxt owns marketing and dashboard routes.
     location / {
         proxy_pass http://nuxt_frontend;
         proxy_http_version 1.1;
@@ -69,12 +72,12 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name api.example.com;
+    server_name api.247.bd;
     root /var/www/247url/backend/public;
     index index.php;
     client_max_body_size 2m;
-    ssl_certificate /etc/letsencrypt/live/api.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.example.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/api.247.bd/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.247.bd/privkey.pem;
 
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;

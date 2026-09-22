@@ -71,6 +71,7 @@ services:
     build: ./frontend
     environment:
       NUXT_API_BASE: http://nginx/api/v1
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost/api/v1}
       NUXT_PUBLIC_SITE_URL: ${FRONTEND_URL:-http://localhost}
       NUXT_PUBLIC_SHORT_URL_DOMAIN: ${SHORT_URL_DOMAIN:-http://localhost}
     depends_on: { backend: { condition: service_healthy } }

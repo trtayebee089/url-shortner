@@ -10,7 +10,7 @@ Production-oriented URL shortening SaaS foundation built with Nuxt 3, Vue 3, Typ
 ## Repository
 
 ```text
-frontend/       Nuxt SSR website, BFF, auth and dashboard UI
+frontend/       Nuxt SSR website, direct API client, auth and dashboard UI
 backend/        Laravel API, redirects, jobs and scheduler
 deploy/nginx/   local and production Nginx examples
 docker-compose.yml
@@ -102,14 +102,14 @@ Run one request after clearing `short-link:TestCode` to observe a cache miss, th
 2. **Runtime:** install Nginx, PHP 8.3 FPM with `intl`, `pdo_mysql`, `pcntl`, `bcmath`, `opcache`, and XML extensions, MySQL 8, Redis 7, Node 22, Composer, and Supervisor or systemd.
 3. **Release:** deploy to a versioned release directory, run `composer install --no-dev --classmap-authoritative`, `npm ci`, and `npm run build`. Symlink only `backend/storage` and environment files as shared state.
 4. **Laravel:** set `APP_ENV=production`, `APP_DEBUG=false`, production URLs, MySQL with binary short-code collation, Redis cache/queue, real SMTP, exact CORS origins, a dedicated analytics hash key, trusted proxies/geo policy, secure sessions, retention, rate limits, and reserved aliases. Run `php artisan migrate --force`, then `php artisan config:cache`, `route:cache`, and `view:cache`.
-5. **Nuxt:** run `.output/server/index.mjs` as a restricted systemd user with `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT=3000`, internal `NUXT_API_BASE`, public site URL, and short domain. Restart it atomically after each release.
+5. **Nuxt:** run `.output/server/index.mjs` as a restricted systemd user with `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT=3000`, `NUXT_API_BASE`, `NUXT_PUBLIC_API_BASE`, public site URL, and short domain. Restart it atomically after each release.
 6. **Nginx:** adapt `deploy/nginx/production.conf.example`. Exact public routes go to Nuxt; a constrained single-segment code route goes directly to Laravel; API traffic uses the API virtual host. Replace domains and PHP socket paths.
 7. **Workers:** run at least one `php artisan queue:work redis --queue=default,analytics --sleep=1 --tries=3 --timeout=60` process under Supervisor/systemd. Use `php artisan queue:restart` during deploys. Add one cron entry: `* * * * * cd /var/www/247url/backend && php artisan schedule:run >> /dev/null 2>&1`.
 8. **Operations:** make `storage` and `bootstrap/cache` writable by the PHP user, configure log rotation, monitor `/up`, queue failures and latency, back up MySQL, test restores, and deploy Sentry/OpenTelemetry only when configured. Telescope should remain development-only.
 
 Never run seeders in production unless their exact effect has been reviewed. Back up before schema changes and use maintenance mode for non-compatible migrations.
 
-Required manual production values include `APP_KEY`, `APP_URL`, `FRONTEND_URL`, `SHORT_URL_DOMAIN`, all `DB_*`, Redis host/password/TLS settings supported by the environment, `CORS_ALLOWED_ORIGINS`, `SANCTUM_STATEFUL_DOMAINS`, `TRUSTED_PROXIES`, `ANALYTICS_HASH_KEY`, SMTP credentials/from address, every `RATE_LIMIT_*`, retention/location/geo choices, blocked/reserved domains, and the Nuxt `NUXT_API_BASE` plus public URLs. Set `SESSION_SECURE_COOKIE=true`, `SESSION_HTTP_ONLY=true`, `SESSION_SAME_SITE=lax`, and `SESSION_ENCRYPT=true`. Do not set `DEMO_USER_PASSWORD` or run the development seeder in production.
+Required manual production values include `APP_KEY`, `APP_URL`, `FRONTEND_URL`, `SHORT_URL_DOMAIN`, all `DB_*`, Redis host/password/TLS settings supported by the environment, `CORS_ALLOWED_ORIGINS`, `TRUSTED_PROXIES`, `ANALYTICS_HASH_KEY`, SMTP credentials/from address, every `RATE_LIMIT_*`, retention/location/geo choices, blocked/reserved domains, and both Nuxt API base variables plus public URLs. The browser uses the API's existing Sanctum bearer-token contract; `SANCTUM_STATEFUL_DOMAINS` and Laravel session-cookie settings matter only if that backend is later changed to cookie-based SPA authentication. Do not set `DEMO_USER_PASSWORD` or run the development seeder in production.
 
 ## Key decisions
 

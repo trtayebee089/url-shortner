@@ -2,7 +2,7 @@
 
 ## Boundaries
 
-- **Nuxt 3** owns SSR marketing and legal pages, authentication/dashboard presentation, metadata, robots, sitemap, and a small backend-for-frontend (BFF). The BFF stores Sanctum bearer tokens in HTTP-only cookies.
+- **Nuxt 3** owns SSR marketing and legal pages, authentication/dashboard presentation, metadata, robots, sitemap, and one centralized browser API client configured by public runtime config.
 - **Laravel 12** is authoritative for identities, authorization, URL validation, code allocation, redirects, link state, analytics, QR codes, abuse controls, API tokens, and scheduled work.
 - **MySQL 8** is durable storage. `short_code` and `custom_alias` are unique. Production uses `utf8mb4_bin`, matching the documented case-sensitive alias behavior.
 - **Redis** is the redirect metadata cache and queue transport. Link mutations invalidate cache keys immediately. Cache failures are isolated from redirect resolution: Laravel falls back to MySQL, while analytics delivery is best-effort during an outage.
@@ -13,7 +13,7 @@
 flowchart LR
     B[Browser] --> N[Nginx]
     N -->|marketing, auth, dashboard| U[Nuxt SSR]
-    U -->|BFF request + Sanctum token| A[Laravel API /api/v1]
+    U -->|HTTPS + Sanctum bearer token| A[Laravel API /api/v1]
     N -->|single-segment short code| R[Laravel redirect route]
     R --> C[(Redis cache)]
     R -->|cache miss| M[(MySQL)]
@@ -68,7 +68,7 @@ erDiagram
 ```mermaid
 sequenceDiagram
     participant B as Browser
-    participant N as Nuxt BFF
+    participant N as Nuxt browser client
     participant L as Laravel/Sanctum
     B->>N: Login credentials over HTTPS
     N->>L: POST /api/v1/auth/login
@@ -94,6 +94,6 @@ Email verification gates dashboard resources. Password reset responses do not re
 ## Nginx ownership
 
 - Known single-segment Nuxt routes are matched before the constrained short-code regex. Every other `/{3-64 character code}` goes directly to Laravel/PHP-FPM and is never edge-cached.
-- `/api/v1/*` on the API hostname goes to Laravel. On the main hostname, `/api/session/*` and `/api/backend/*` go to Nuxt's same-origin BFF.
+- `/api/v1/*` on the API hostname goes to Laravel. The main hostname does not expose or proxy Laravel API paths.
 - `/dashboard/*`, authentication screens, legal pages, and marketing pages go to Nuxt SSR.
 - `/_nuxt/*` is the only long-lived public immutable cache location.

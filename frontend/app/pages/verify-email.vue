@@ -1,8 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ middleware:'auth' }); useSeoPage('Verify email', 'Verify your email address to activate link management.', '/verify-email')
-const { user, fetchUser }=useAuth(); const loading=ref(false); const sent=ref(false); const error=ref('')
+const { user, fetchUser }=useAuth(); const loading=ref(false); const sent=ref(false); const error=ref(''); const {request}=useApi()
 onMounted(async()=>{await fetchUser();if(user.value?.email_verified_at)await navigateTo('/dashboard')})
-async function resend(){loading.value=true;error.value='';try{await $fetch('/api/backend/auth/email/verification-notification',{method:'POST'});sent.value=true}catch(e:any){error.value=e?.status===429?'Please wait before requesting another email.':e?.data?.message||'Unable to resend verification.'}finally{loading.value=false}}
+async function resend(){loading.value=true;error.value='';try{await request('auth/email/verification-notification',{method:'POST'});sent.value=true}catch(e:any){error.value=e?.status===429?'Please wait before requesting another email.':e?.data?.message||'Unable to resend verification.'}finally{loading.value=false}}
 async function checkVerification(){const current=await fetchUser();if(current?.email_verified_at)await navigateTo('/dashboard')}
 </script>
 <template><AuthShell title="Verify your email" description="Email verification protects your workspace before link management is enabled."><div class="rounded-lg border border-brand-mid bg-brand-light p-5"><p class="text-sm text-text-secondary">We sent a verification link to <strong class="text-text-primary">{{ user?.email }}</strong>. Open it in the same browser, then return here.</p></div><p v-if="sent" class="mt-4 text-sm text-success" role="status">A new verification email was sent.</p><p v-if="error" class="mt-4 field-error" role="alert">{{ error }}</p><div class="mt-5 flex flex-col gap-2 sm:flex-row"><button class="btn-primary flex-1" :disabled="loading" @click="resend">{{ loading?'Sending…':'Resend email' }}</button><button class="btn-secondary flex-1" @click="checkVerification">I’ve verified</button></div></AuthShell></template>

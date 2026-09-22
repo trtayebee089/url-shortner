@@ -4,10 +4,10 @@ import type { ApiEnvelope, LinkRecord } from '~/types/api'
 import { ref } from 'vue'
 withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
 const destinationUrl = ref(''); const customAlias = ref(''); const loading = ref(false); const result = ref<LinkRecord | null>(null); const error = ref(''); const errors = ref<Record<string, string[]>>({}); const showQr = ref(false)
-const { user } = useAuth(); const { show } = useToast()
+const { user } = useAuth(); const { show } = useToast(); const { request } = useApi()
 async function submit() {
   loading.value = true; error.value = ''; errors.value = {}; result.value = null
-  try { const endpoint = user.value ? '/api/backend/links' : '/api/backend/public/links'; const response = await $fetch<ApiEnvelope<LinkRecord>>(endpoint, { method: 'POST', body: { destination_url: destinationUrl.value, custom_alias: customAlias.value || null } }); result.value = response.data; show('Short link created.') }
+  try { const endpoint = user.value ? 'links' : 'public/links'; const response = await request<ApiEnvelope<LinkRecord>>(endpoint, { method: 'POST', body: { destination_url: destinationUrl.value, custom_alias: customAlias.value || null } }); result.value = response.data; show('Short link created.') }
   catch (exception: any) { errors.value = exception?.data?.errors || {}; error.value = exception?.status === 429 ? 'Rate limit reached. Please wait and try again.' : exception?.data?.message || 'We could not create that short link. Check your connection and try again.' }
   finally { loading.value = false }
 }

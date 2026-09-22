@@ -34,15 +34,22 @@ export default defineNuxtConfig({
      */
     apiBase:
       process.env.NUXT_API_BASE ||
-      'https://api.247.bd/api/v1',
+      'http://localhost:8000/api/v1',
 
     public: {
+      /**
+       * Browser-visible Laravel API base URL.
+       */
+      apiBase:
+        process.env.NUXT_PUBLIC_API_BASE ||
+        'http://localhost:8000/api/v1',
+
       /**
        * Public website URL.
        */
       siteUrl:
         process.env.NUXT_PUBLIC_SITE_URL ||
-        'https://247.bd',
+        'http://localhost:3000',
 
       /**
        * Public short-link domain.
@@ -61,7 +68,7 @@ export default defineNuxtConfig({
        */
       shortUrlDomain:
         process.env.NUXT_PUBLIC_SHORT_URL_DOMAIN ||
-        'https://247.bd',
+        'http://localhost:8000',
     },
   },
 

@@ -28,4 +28,4 @@ Core resources:
 
 Admin-only routes live under `/api/v1/admin` and require both Sanctum authentication and the `admin` role.
 
-Browser traffic uses the Nuxt same-origin BFF; the browser never receives the Sanctum token. Direct integrations use expiring bearer tokens with `links:read`, `links:write`, and `analytics:read` only. Those tokens cannot manage profile credentials, mint more tokens, or access administration. Production CORS must list exact frontend origins and must not use a wildcard when credentials are enabled.
+Browser traffic uses the public Laravel API base and the API's existing expiring Sanctum bearer-token contract. The Nuxt client stores the current login token in a Secure, SameSite=Strict first-party cookie and sends it only as an `Authorization: Bearer` header to the configured API origin. Integration tokens use `links:read`, `links:write`, and `analytics:read` only; those scoped tokens cannot manage profile credentials, mint more tokens, or access administration. Production CORS must list exact frontend origins and must not use a wildcard when credentials are enabled.

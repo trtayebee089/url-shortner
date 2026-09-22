@@ -7,7 +7,7 @@
 - Configurable blocked domains, reserved aliases, anonymous creation, rate limits, retention, and optional location storage.
 - Database-enforced unique short codes plus retry-on-constraint collision handling.
 - Sanctum bearer authentication, email verification, active-account middleware, ownership policies, ability-scoped admin/account routes, expiring tokens, password rules, and token revocation on reset.
-- Nuxt keeps the primary session token in an HTTP-only, `Secure`, SameSite=Lax production `__Host-` cookie. It is not stored in `localStorage`. Unsafe BFF calls reject cross-site Origin/Fetch-Metadata signals, and the generic proxy cannot call login or registration endpoints that return plaintext tokens.
+- Nuxt uses the Laravel API's existing bearer-token authentication contract. The browser keeps the current token in a Secure, SameSite=Strict first-party cookie and the centralized API client sends it only in an `Authorization` header to `NUXT_PUBLIC_API_BASE`. The CSP `connect-src` directive is derived from that configured API origin.
 - CORS allowlists origins and headers. Laravel emits anti-framing, MIME sniffing, referrer, and permissions headers. Nginx production guidance adds HSTS.
 - Eloquent/query bindings prevent SQL injection; Vue escapes interpolated content; error responses do not expose production stack traces.
 - Resource articles are typed local data rendered as Vue text nodes. The frontend does not render user-controlled HTML, link titles, descriptions, tags, or resource copy through `v-html`.
