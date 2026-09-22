@@ -62,6 +62,25 @@ class LinkApiTest extends TestCase
             ->assertJsonPath('data.short_code', 'Fresh01');
     }
 
+    public function test_anonymous_creation_uses_the_public_short_url_domain_and_remains_redirectable(): void
+    {
+        config(['shortener.domain' => 'https://247.bd']);
+
+        $response = $this->postJson('/api/v1/public/links', [
+            'destination_url' => 'https://example.com/canonical-target',
+            'custom_alias' => 'mGnw4Cm',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.short_code', 'mGnw4Cm')
+            ->assertJsonPath('data.short_url', 'https://247.bd/mGnw4Cm');
+
+        $this->assertStringNotContainsString('api.247.bd', (string) $response->json('data.short_url'));
+        $this->get('/mGnw4Cm')
+            ->assertStatus(302)
+            ->assertRedirect('https://example.com/canonical-target');
+    }
+
     public function test_long_urls_are_rejected_and_query_strings_are_preserved(): void
     {
         $this->signIn();

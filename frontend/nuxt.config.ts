@@ -68,7 +68,7 @@ export default defineNuxtConfig({
        */
       shortUrlDomain:
         process.env.NUXT_PUBLIC_SHORT_URL_DOMAIN ||
-        'http://localhost:8000',
+        'http://localhost:3000',
     },
   },
 
