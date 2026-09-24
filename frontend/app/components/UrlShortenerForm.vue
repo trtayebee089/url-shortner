@@ -2,7 +2,7 @@
 import QrcodeVue from 'qrcode.vue'
 import type { ApiEnvelope, LinkRecord } from '~/types/api'
 import { ref } from 'vue'
-withDefaults(defineProps<{ compact?: boolean }>(), { compact: false })
+withDefaults(defineProps<{ compact?: boolean; hero?: boolean; landing?: boolean }>(), { compact: false, hero: false, landing: false })
 const destinationUrl = ref(''); const customAlias = ref(''); const loading = ref(false); const result = ref<LinkRecord | null>(null); const error = ref(''); const errors = ref<Record<string, string[]>>({}); const showQr = ref(false)
 const { show } = useToast(); const { request } = useApi()
 async function submit() {
@@ -13,12 +13,12 @@ async function submit() {
 }
 </script>
 <template>
-  <div class="rounded-xl border border-border bg-canvas p-5 shadow-sm sm:p-6">
-    <div class="mb-4 flex items-center gap-2"><span class="size-2 rounded-full bg-success"/><span class="text-xs font-medium text-text-secondary">Try it — no account needed</span></div>
-    <form class="grid gap-3" :class="compact ? 'sm:grid-cols-[1fr_11rem_auto] sm:items-start' : 'lg:grid-cols-[1fr_12rem_auto] lg:items-start'" novalidate @submit.prevent="submit">
-      <div><label for="destination-url" class="label">Destination URL</label><input id="destination-url" v-model="destinationUrl" class="input" :class="errors.destination_url ? 'border-danger' : ''" type="url" required placeholder="https://your-long-url.com/example/campaign" autocomplete="url" :aria-invalid="Boolean(errors.destination_url)" aria-describedby="destination-error"><p id="destination-error" class="field-error" role="alert">{{ errors.destination_url?.[0] }}</p></div>
-      <div><label for="custom-alias" class="label">Custom alias</label><input id="custom-alias" v-model="customAlias" class="input" type="text" maxlength="64" pattern="[A-Za-z0-9_-]+" placeholder="summer-sale" :aria-invalid="Boolean(errors.custom_alias)"><p class="field-error" role="alert">{{ errors.custom_alias?.[0] }}</p></div>
-      <button class="btn-primary btn-lg self-start lg:mt-[22px]" type="submit" :disabled="loading || !destinationUrl"><svg v-if="loading" class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>{{ loading ? 'Shortening…' : 'Shorten link' }}</button>
+  <div class="rounded-xl border border-border p-5 shadow-sm sm:p-6" :class="hero || landing ? 'bg-white' : 'bg-canvas'">
+    <div v-if="!hero" class="mb-4 flex items-center gap-2"><span class="size-2 rounded-full bg-success"/><span class="text-xs font-medium text-text-secondary">Try it — no account needed</span></div>
+    <form class="grid gap-3" :class="landing ? 'md:grid-cols-[minmax(0,1fr)_auto] md:items-end' : hero ? 'sm:grid-cols-[1fr_auto] sm:items-end' : compact ? 'sm:grid-cols-[1fr_11rem_auto] sm:items-start' : 'lg:grid-cols-[1fr_12rem_auto] lg:items-start'" novalidate @submit.prevent="submit">
+      <div :class="landing ? 'md:col-span-2' : ''"><label for="destination-url" class="label">Destination URL</label><input id="destination-url" v-model="destinationUrl" class="input" :class="errors.destination_url ? 'border-danger' : ''" type="url" required placeholder="https://your-long-url.com/example/campaign" autocomplete="url" :aria-invalid="Boolean(errors.destination_url)" aria-describedby="destination-error"><p id="destination-error" class="field-error" role="alert">{{ errors.destination_url?.[0] }}</p></div>
+      <div v-if="!hero"><label for="custom-alias" class="label">Custom alias</label><input id="custom-alias" v-model="customAlias" class="input" type="text" maxlength="64" pattern="[A-Za-z0-9_-]+" placeholder="summer-sale" :aria-invalid="Boolean(errors.custom_alias)"><p class="field-error" role="alert">{{ errors.custom_alias?.[0] }}</p></div>
+      <button class="btn-primary btn-lg w-full self-start" :class="[landing ? 'md:w-auto' : 'sm:w-auto', !hero && !landing ? 'lg:mt-[22px]' : '']" type="submit" :disabled="loading || !destinationUrl"><svg v-if="loading" class="size-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>{{ loading ? 'Shortening…' : 'Shorten link' }}</button>
     </form>
     <p v-if="error && !Object.keys(errors).length" class="mt-4 rounded-md border border-danger-border bg-danger-bg p-3 text-sm text-danger" role="alert">{{ error }}</p>
     <div v-if="result" class="mt-5 rounded-lg border border-success-border bg-success-bg p-4" aria-live="polite"><div class="flex flex-col gap-3 sm:flex-row sm:items-center"><div class="min-w-0 flex-1"><p class="text-xs font-medium text-success">Your short link is ready</p><a :href="result.short_url" target="_blank" rel="noopener noreferrer nofollow" class="mt-1 block truncate font-semibold text-text-primary">{{ result.short_url }}</a><p class="mt-0.5 truncate text-xs text-text-muted">{{ result.destination_url }}</p></div><CopyButton :text="result.short_url"/><button class="btn-secondary h-8 px-3 text-xs" type="button" @click="showQr = !showQr">{{ showQr ? 'Hide QR' : 'Show QR' }}</button></div><div v-if="showQr" class="mt-4 inline-block rounded-md border border-border bg-white p-3"><QrcodeVue :value="result.short_url" :size="160" level="M" render-as="svg"/></div></div>

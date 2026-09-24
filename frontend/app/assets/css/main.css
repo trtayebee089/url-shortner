@@ -14,6 +14,7 @@ button, input, textarea, select { font: inherit; }
 
 @layer components {
   .container-shell { @apply mx-auto w-full max-w-6xl px-5 sm:px-6; }
+  .marketing-container { @apply mx-auto w-full max-w-[1280px] px-5 md:px-8 xl:px-10; }
   .surface { @apply rounded-lg border border-border bg-surface shadow-xs; }
   .input { @apply w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-text-primary outline-none transition placeholder:text-text-muted focus:border-brand focus:ring-2 focus:ring-brand/10 disabled:bg-surface2 disabled:opacity-60; }
   .label { @apply mb-1.5 block text-xs font-medium text-text-primary; }

@@ -9,10 +9,16 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\LinkController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\QrCodeController;
+use App\Http\Controllers\Api\V1\SocialAuthController;
+use App\Http\Controllers\Api\V1\VerificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::prefix('auth')->group(function () {
+        Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->whereIn('provider', ['google', 'apple'])->middleware('throttle:social-auth');
+        Route::match(['get', 'post'], '{provider}/callback', [SocialAuthController::class, 'callback'])->whereIn('provider', ['google', 'apple'])->middleware('throttle:social-auth');
+        Route::post('social/exchange', [SocialAuthController::class, 'exchange'])->middleware('throttle:social-auth');
+        Route::post('email/verification-proof', [VerificationController::class, 'consumeProof'])->middleware('throttle:auth');
         Route::post('register', [AuthController::class, 'register'])->middleware('throttle:auth');
         Route::post('login', [AuthController::class, 'login'])->middleware('throttle:auth');
         Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:password-reset');

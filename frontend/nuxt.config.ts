@@ -19,7 +19,8 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    // Type checking runs as a separate build gate in package.json.
+    typeCheck: false,
   },
 
   runtimeConfig: {
@@ -104,17 +105,19 @@ export default defineNuxtConfig({
 
   routeRules: {
     /**
-     * Public marketing pages.
-     *
-     * SWR allows Nuxt/Nitro to cache the rendered page while
-     * still allowing it to refresh periodically.
+     * Keep the homepage HTML tied to the active Nuxt build. Hashed Nuxt
+     * assets remain cacheable, but cached SSR HTML can outlive a deployment.
      */
     '/': {
-      swr: 3600,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
     },
 
     '/features': {
-      swr: 86400,
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
     },
 
     '/pricing': {
@@ -173,6 +176,15 @@ export default defineNuxtConfig({
       headers: {
         'X-Robots-Tag': 'noindex, nofollow, noarchive',
         'Cache-Control': 'private, no-store, max-age=0',
+        'Referrer-Policy': 'no-referrer',
+      },
+    },
+
+    '/auth/complete': {
+      headers: {
+        'X-Robots-Tag': 'noindex, nofollow, noarchive',
+        'Cache-Control': 'private, no-store, max-age=0',
+        'Referrer-Policy': 'no-referrer',
       },
     },
 

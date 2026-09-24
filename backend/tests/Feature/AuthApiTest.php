@@ -55,7 +55,12 @@ class AuthApiTest extends TestCase
         $user = User::factory()->unverified()->create();
         $url = URL::temporarySignedRoute('verification.verify', now()->addMinutes(30), ['id' => $user->id, 'hash' => sha1($user->email)]);
 
-        $this->get($url)->assertRedirect();
+        $response = $this->get($url)->assertRedirect();
+        $location = $response->headers->get('Location');
+        $this->assertStringContainsString('/login?verified=1&proof=', $location);
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        $this->postJson('/api/v1/auth/email/verification-proof', ['proof' => $query['proof']])->assertOk()->assertJsonPath('verified', true);
+        $this->postJson('/api/v1/auth/email/verification-proof', ['proof' => $query['proof']])->assertOk()->assertJsonPath('verified', false);
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
@@ -67,6 +72,7 @@ class AuthApiTest extends TestCase
 
         $this->get($wrongHashUrl)->assertForbidden();
         $this->get($expiredUrl)->assertForbidden();
+        $this->postJson('/api/v1/auth/email/verification-proof', ['proof' => str_repeat('x', 64)])->assertOk()->assertJsonPath('verified', false);
         $this->assertNull($user->fresh()->email_verified_at);
     }
 

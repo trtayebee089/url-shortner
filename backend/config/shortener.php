@@ -23,6 +23,7 @@ return [
         'authenticated_create' => (int) env('RATE_LIMIT_AUTHENTICATED_CREATE', 60),
         'api' => (int) env('RATE_LIMIT_API', 120),
         'auth' => (int) env('RATE_LIMIT_AUTH', 5),
+        'social_auth' => (int) env('RATE_LIMIT_SOCIAL_AUTH', 18),
         'password_reset' => (int) env('RATE_LIMIT_PASSWORD_RESET', 3),
         'analytics' => (int) env('RATE_LIMIT_ANALYTICS', 60),
         'abuse_reports' => (int) env('RATE_LIMIT_ABUSE_REPORTS', 6),

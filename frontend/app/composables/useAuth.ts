@@ -30,6 +30,12 @@ export function useAuth() {
     user.value = response.data.user
     return response
   }
+  async function finishSocialLogin(ticket: string) {
+    const response = await request<ApiEnvelope<{ user: User, token: string }>>('auth/social/exchange', { method: 'POST', body: { ticket } })
+    token.value = response.data.token
+    user.value = response.data.user
+    return response
+  }
   async function logout() {
     try { await request('auth/logout', { method: 'POST' }) }
     finally {
@@ -38,5 +44,5 @@ export function useAuth() {
       await navigateTo('/login')
     }
   }
-  return { user, loading, fetchUser, login, register, logout }
+  return { user, loading, fetchUser, login, register, finishSocialLogin, logout }
 }
