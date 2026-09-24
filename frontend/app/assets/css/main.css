@@ -33,7 +33,7 @@ button, input, textarea, select { font: inherit; }
   .badge-warning { @apply badge border-warning-border bg-warning-bg text-warning; }
   .badge-danger { @apply badge border-danger-border bg-danger-bg text-danger; }
   .badge-brand { @apply badge border-brand-mid bg-brand-light text-brand; }
-  .dashboard-page { @apply mx-auto w-full max-w-[1080px] px-4 py-6 sm:px-6 sm:py-8; }
+  .dashboard-page { @apply mx-auto w-full max-w-[1400px] px-4 py-5 sm:px-6 sm:py-6 lg:px-8; }
   .article-prose h1 { @apply mt-3 text-4xl font-bold tracking-[-0.03em] sm:text-5xl; }
   .article-prose h2 { @apply mb-3 mt-10 text-2xl font-bold tracking-[-0.02em]; }
   .article-prose h3 { @apply mb-2 mt-7 text-lg font-semibold; }
