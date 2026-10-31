@@ -46,7 +46,7 @@ class RolePermissions
             // Keep existing admin access working during the additive migration.
             $this->definitions = Schema::hasTable('staff_roles')
                 ? DB::table('staff_roles')->where('is_active', true)->get()->mapWithKeys(fn ($record) => [$record->slug => json_decode($record->permissions, true)])->all()
-                : self::DEFAULTS;
+                : array_replace(self::DEFAULTS, ['admin' => self::DEFAULTS['legacy-admin']]);
         }
 
         return array_values(array_intersect(array_keys(self::CATALOG), $this->definitions[$role] ?? []));
