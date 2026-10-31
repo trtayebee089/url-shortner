@@ -4,6 +4,7 @@ const route = useRoute()
 const { user, logout } = useAuth()
 const open = ref(false)
 const links = [ ['Overview', '/admin', '▦'], ['Customers', '/admin/customers', '♙'], ['Plans', '/admin/plans', '▤'], ['Subscriptions', '/admin/subscriptions', '↻'], ['Manual payments', '/admin/payments', '▣'], ['Moderation', '/admin/moderation', '◇'], ['Audit log', '/admin/audit', '◷'] ]
+useSeoMeta({ title: () => links.find(([,to]) => to === route.path)?.[0] || 'Administration' })
 watch(() => route.path, () => { open.value = false })
 </script>
 <template>

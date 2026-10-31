@@ -130,6 +130,7 @@ class ManagementController extends Controller
         $subscription = DB::transaction(function () use ($data, $request) {
             $user = User::lockForUpdate()->findOrFail($data['user_id']);
             abort_unless($user->role === 'user' && $user->status === 'active', 422, 'Choose an active customer account.');
+            abort_if(Subscription::where('user_id', $user->id)->where('provider', 'stripe')->whereNotIn('status', ['cancelled', 'incomplete_expired'])->exists(), 422, 'Cancel the Stripe subscription before assigning a manual agreement.');
             $plan = Plan::findOrFail($data['plan_id']);
             abort_unless($plan->is_active, 422, 'This plan is archived.');
             $overlap = Subscription::where('user_id', $user->id)->whereNotIn('status', ['cancelled', 'incomplete_expired'])->where('ends_at', '>', $data['starts_at'])->where('starts_at', '<', $data['ends_at'])->exists();

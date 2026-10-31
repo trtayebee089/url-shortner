@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Plan;
 use App\Models\Subscription;
 use App\Models\User;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,12 @@ class StripeBillingService
         if ($key) {
             $request = $request->withHeaders(['Idempotency-Key' => $key]);
         }
-        $response = $method === 'get' ? $request->get('https://api.stripe.com/v1/'.$path, $data) : $request->post('https://api.stripe.com/v1/'.$path, $data);
+        try {
+            $response = $method === 'get' ? $request->get('https://api.stripe.com/v1/'.$path, $data) : $request->post('https://api.stripe.com/v1/'.$path, $data);
+        } catch (ConnectionException $exception) {
+            Log::warning('Stripe connection failed.');
+            abort(502, 'Stripe is temporarily unavailable. Please try again.');
+        }
         if (! $response->successful()) {
             Log::warning('Stripe request failed.', ['status' => $response->status(), 'request_id' => $response->header('Request-Id')]);
             abort(502, 'Stripe could not complete this request. Please try again.');
