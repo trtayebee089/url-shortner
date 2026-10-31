@@ -15,6 +15,7 @@ try {
         $allPassed = $allPassed && $response->successful();
     }
     echo 'stripe_enabled: '.(app(App\Services\StripeBillingService::class)->enabled() ? 'true' : 'false').PHP_EOL;
+    echo 'mail_transport: '.config('mail.default').PHP_EOL;
     echo 'owner_verified: '.($owner->hasVerifiedEmail() ? 'true' : 'false').PHP_EOL;
     echo 'database_driver: '.Illuminate\Support\Facades\DB::connection()->getDriverName().PHP_EOL;
 

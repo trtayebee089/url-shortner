@@ -1,5 +1,5 @@
 export default defineEventHandler((event) => {
-  const path = getRequestURL(event).pathname
+  const path = getRequestURL(event).pathname.toLowerCase()
   const config = useRuntimeConfig(event)
   const apiOrigin = new URL(config.public.apiBase).origin
 
@@ -12,8 +12,9 @@ export default defineEventHandler((event) => {
   if (path.startsWith('/api/')) {
     setResponseHeader(event, 'Cache-Control', 'private, no-store')
   }
-  if (/^\/(dashboard(?:\/|$)|login$|register$|forgot-password$|reset-password$|verify-email$)/.test(path)) {
+  if (/^\/(admin(?:\/|$)|dashboard(?:\/|$)|login$|register$|forgot-password$|reset-password$|verify-email$)/.test(path)) {
     setResponseHeader(event, 'X-Robots-Tag', 'noindex, nofollow')
+    setResponseHeader(event, 'Cache-Control', 'private, no-store, max-age=0')
   }
 
 })

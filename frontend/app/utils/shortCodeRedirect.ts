@@ -1,6 +1,7 @@
 const shortCodePattern = /^[A-Za-z0-9_-]{3,64}$/
 
 const frontendRoutes = new Set([
+  'admin',
   'about',
   'api',
   'contact',

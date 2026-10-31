@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { getShortCodeRedirectTarget } from '../app/utils/shortCodeRedirect'
 
 describe('short-code redirect routing', () => {
+  it('keeps the superadmin entry point on Nuxt for direct navigation and reloads', () => {
+    expect(getShortCodeRedirectTarget('GET', new URL('https://247.bd/admin'), 'https://api.247.bd/api/v1')).toBeNull()
+    expect(getShortCodeRedirectTarget('GET', new URL('https://247.bd/admin/customers'), 'https://api.247.bd/api/v1')).toBeNull()
+  })
   const apiBase = 'https://api.247.bd/api/v1'
 
   it('redirects a public short code to Laravel while preserving its query string', () => {

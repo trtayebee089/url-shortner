@@ -63,3 +63,7 @@ npm run build
 ```
 
 The Hostinger release runner `deploy/billing-release.php` is CLI-only, validates the exact API installation, takes a MySQL schema/data snapshot outside the public web root, backs up changed code, installs only files from its manifest, migrates, rebuilds caches and provisions the owner without printing a password. Existing `.env`, vendor packages, storage and unrelated sites are preserved. Keep the backup directory private. The runner does not automatically roll back additive schema changes. Restore code from the backup only after evaluating schema compatibility; never drop billing tables with real records.
+
+The shell entry point runs Artisan commands directly because Hostinger disables PHP process-execution functions. The release branch excludes the credential JSON from the separate local-only commit. The frontend's short-code redirect middleware must exclude `admin` so a direct visit or reload stays in Nuxt. Private-page headers are applied to normalized paths as well as Nuxt route rules.
+
+The October 31 dependency refresh removes all reported high/critical npm advisories without a Nuxt major-version upgrade or forced peer dependencies. The remaining audit findings are 43 moderate and 2 low in the existing framework/tooling dependency tree. Some have no available fix; the suggested framework upgrade requires a separate Nuxt migration. Do not run `npm audit fix --force` or `--legacy-peer-deps` to silence them.
