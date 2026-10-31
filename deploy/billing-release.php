@@ -53,18 +53,4 @@ foreach ($files as $file) {
     copy($source.'/'.$file, $target.'.release');
     rename($target.'.release', $target);
 }
-$run = function (array $args) use ($root) {
-    $command = escapeshellarg(PHP_BINARY).' '.escapeshellarg($root.'/artisan').' '.implode(' ', array_map('escapeshellarg', $args));
-    passthru($command, $code);
-    if ($code !== 0) { throw new RuntimeException('Release command failed: '.$args[0]); }
-};
-chdir($root);
-$run(['config:clear']);
-$run(['route:clear']);
-$run(['migrate', '--force']);
-$run(['optimize']);
-$run(['admin:provision', $email, '--create']);
-file_put_contents($backup.'/complete', date(DATE_ATOM));
-echo "Billing release complete; Stripe disabled by default.\n";
-// Mail delivery failure must not repeat deployment or reset an existing password.
-$run(['admin:provision', $email, '--send-reset']);
+echo "Backup complete and release files installed. Run migrations and owner setup from the shell runner.\n";
