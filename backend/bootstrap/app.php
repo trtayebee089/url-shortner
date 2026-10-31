@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureActiveAccount;
 use App\Http\Middleware\EnsureAdmin;
+use App\Http\Middleware\EnsureManagementPermission;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\ResolveLinkCreator;
 use App\Http\Middleware\SecurityHeaders;
@@ -25,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         if ($trustedProxies !== []) {
             $middleware->trustProxies(at: $trustedProxies);
         }
-        $middleware->alias(['superadmin' => EnsureSuperAdmin::class, 'active' => EnsureActiveAccount::class, 'admin' => EnsureAdmin::class, 'abilities' => CheckAbilities::class, 'ability' => CheckForAnyAbility::class, 'link.creator' => ResolveLinkCreator::class]);
+        $middleware->alias(['management.permission' => EnsureManagementPermission::class, 'superadmin' => EnsureSuperAdmin::class, 'active' => EnsureActiveAccount::class, 'admin' => EnsureAdmin::class, 'abilities' => CheckAbilities::class, 'ability' => CheckForAnyAbility::class, 'link.creator' => ResolveLinkCreator::class]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(fn (Request $request) => $request->is('api/*') || $request->expectsJson());

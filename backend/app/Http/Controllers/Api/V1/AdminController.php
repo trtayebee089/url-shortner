@@ -20,7 +20,7 @@ class AdminController extends Controller
 
     public function users(): JsonResponse
     {
-        return response()->json(['data' => User::latest()->paginate(50)]);
+        return response()->json(['data' => User::where('role', 'user')->latest()->paginate(50)]);
     }
 
     public function links(): JsonResponse

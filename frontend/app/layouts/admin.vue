@@ -3,8 +3,9 @@ useSeoMeta({ robots: 'noindex, nofollow' })
 const route = useRoute()
 const { user, logout } = useAuth()
 const open = ref(false)
-const links = [ ['Overview', '/admin', '▦'], ['Customers', '/admin/customers', '♙'], ['Plans', '/admin/plans', '▤'], ['Subscriptions', '/admin/subscriptions', '↻'], ['Manual payments', '/admin/payments', '▣'], ['Moderation', '/admin/moderation', '◇'], ['Audit log', '/admin/audit', '◷'] ]
-useSeoMeta({ title: () => links.find(([,to]) => to === route.path)?.[0] || 'Administration' })
+const { pages } = useAccess()
+const links = computed(() => pages.value.map(page => [page.label, page.path, page.icon]))
+useSeoMeta({ title: () => links.value.find(([,to]) => to === route.path)?.[0] || 'Administration' })
 watch(() => route.path, () => { open.value = false })
 </script>
 <template>
@@ -15,6 +16,6 @@ watch(() => route.path, () => { open.value = false })
       <nav class="flex-1 space-y-1 overflow-y-auto p-4" aria-label="Administration"><NuxtLink v-for="[label,to,icon] in links" :key="to" :to="to!" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm" :class="(to==='/admin' ? route.path===to : route.path.startsWith(to!)) ? 'bg-brand-light font-semibold text-brand' : 'text-text-secondary hover:bg-surface2'" :aria-current="route.path===to ? 'page' : undefined"><span aria-hidden="true" class="w-4 text-center">{{ icon }}</span>{{ label }}</NuxtLink></nav>
       <div class="space-y-3 border-t border-border p-5"><p class="truncate text-xs font-semibold">{{ user?.email }}</p><NuxtLink to="/dashboard" class="block text-xs text-text-secondary">← Customer workspace</NuxtLink><button class="text-xs text-text-muted" @click="logout">Sign out</button></div>
     </aside>
-    <div class="min-w-0 flex-1 md:ml-60"><header class="flex h-16 items-center justify-between border-b border-border bg-surface px-5 sm:px-8"><div class="flex items-center gap-3"><button class="btn-ghost md:hidden" aria-label="Open navigation" @click="open=true">☰</button><span class="text-sm font-medium">247URL control center</span></div><span class="badge-brand">Superadmin</span></header><main class="mx-auto max-w-[1500px] px-5 py-8 sm:px-8"><slot/></main><footer class="px-8 pb-6 text-xs text-text-muted">247URL · Secure administration</footer></div>
+    <div class="min-w-0 flex-1 md:ml-60"><header class="flex h-16 items-center justify-between border-b border-border bg-surface px-5 sm:px-8"><div class="flex items-center gap-3"><button class="btn-ghost md:hidden" aria-label="Open navigation" @click="open=true">☰</button><span class="text-sm font-medium">247URL control center</span></div><span class="badge-brand">{{ user?.role.replaceAll('_', ' ') }}</span></header><main class="mx-auto max-w-[1500px] px-5 py-8 sm:px-8"><slot/></main><footer class="px-8 pb-6 text-xs text-text-muted">247URL · Secure administration</footer></div>
   </div>
 </template>

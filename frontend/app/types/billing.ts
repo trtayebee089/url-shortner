@@ -5,7 +5,8 @@ export interface Plan {
   stripe_monthly_price_id?: string | null; stripe_yearly_price_id?: string | null
   checkout_monthly?: boolean; checkout_yearly?: boolean
 }
-export interface Customer { id: number; name: string; email: string; role: string; status: string; links_count?: number; created_at: string }
+export interface Customer { id: number; name: string; email: string; role: string; status: string; email_verified_at?: string | null; links_count?: number; created_at: string }
+export interface StaffRole { id: number; name: string; slug: string; is_system: boolean; is_active: boolean; permissions: string[]; users_count: number }
 export interface Subscription { id: number; user_id: number; plan_id: number; user?: Customer; plan: Plan; status: string; effective_status: string; interval: string; amount: number; currency: string; starts_at: string; ends_at: string; provider: string; cancel_at_period_end: boolean }
 export interface Payment { id: number; amount: number; currency: string; status: string; method: string; reference: string; paid_at: string; subscription: Subscription }
 export interface Audit { id: number; action: string; subject_type: string; subject_id: number; actor: Customer | null; created_at: string; changes: Record<string, unknown> }

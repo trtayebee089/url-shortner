@@ -19,16 +19,16 @@ class ManagementController extends Controller
 {
     public function __construct(private BillingService $billing) {}
 
-    public function overview()
+    public function overview(Request $request)
     {
         return response()->json(['data' => [
             'customers' => User::where('role', 'user')->count(),
             'active_customers' => User::where('role', 'user')->where('status', 'active')->count(),
             'active_subscriptions' => Subscription::whereIn('status', ['active', 'trialing'])->where('starts_at', '<=', now())->where('ends_at', '>', now())->count(),
             'expiring_soon' => Subscription::whereIn('status', ['active', 'trialing'])->whereBetween('ends_at', [now(), now()->addDays(7)])->count(),
-            'payments_this_month' => ManualPayment::where('status', 'paid')->where('paid_at', '>=', now()->startOfMonth())->select('currency')->selectRaw('SUM(amount) as amount')->groupBy('currency')->get(),
+            'payments_this_month' => $request->user()->canManage('payments.view') ? ManualPayment::where('status', 'paid')->where('paid_at', '>=', now()->startOfMonth())->select('currency')->selectRaw('SUM(amount) as amount')->groupBy('currency')->get() : [],
             'stripe_enabled' => app(StripeBillingService::class)->enabled(),
-            'recent_activity' => AdminAuditLog::with('actor:id,name,email')->latest('id')->limit(8)->get(),
+            'recent_activity' => $request->user()->canManage('audit.view') ? AdminAuditLog::with('actor:id,name,email')->latest('id')->limit(8)->get() : [],
         ]]);
     }
 
@@ -36,14 +36,17 @@ class ManagementController extends Controller
     {
         $data = $request->validate(['search' => 'nullable|string|max:120', 'status' => 'nullable|in:active,suspended', 'page' => 'nullable|integer|min:1']);
 
-        return response()->json(['data' => User::query()->withCount('links')
+        return response()->json(['data' => User::query()->where('role', 'user')->withCount('links')
             ->when($data['search'] ?? null, fn ($q, $search) => $q->where(fn ($q) => $q->where('email', 'like', '%'.$search.'%')->orWhere('name', 'like', '%'.$search.'%')))
             ->when($data['status'] ?? null, fn ($q, $status) => $q->where('status', $status))->latest('id')->paginate(20)]);
     }
 
-    public function customer(User $user)
+    public function customer(Request $request, User $user)
     {
-        return response()->json(['data' => ['user' => $user->loadCount('links'), 'subscriptions' => Subscription::where('user_id', $user->id)->with('plan')->latest('id')->get(), 'plan' => $this->billing->plan($user)]]);
+        abort_unless($user->role === 'user', 404);
+        $canViewBilling = $request->user()->canManage('subscriptions.view');
+
+        return response()->json(['data' => ['user' => $user->loadCount('links'), 'subscriptions' => $canViewBilling ? Subscription::where('user_id', $user->id)->with('plan')->latest('id')->get() : [], 'plan' => $canViewBilling ? $this->billing->plan($user) : null]]);
     }
 
     public function updateCustomer(Request $request, User $user)

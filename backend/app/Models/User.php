@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\RolePermissions;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,22 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    protected $appends = ['management_permissions'];
+
+    public function getManagementPermissionsAttribute(): array
+    {
+        if ($this->status !== 'active' || ! $this->hasVerifiedEmail()) {
+            return [];
+        }
+
+        return app(RolePermissions::class)->forRole($this->role);
+    }
+
+    public function canManage(string $permission): bool
+    {
+        return in_array($permission, $this->management_permissions, true);
+    }
+
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
@@ -63,6 +80,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'superadmin'], true);
+        return in_array($this->role, ['admin', 'legacy-admin', 'superadmin'], true);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\Abuse\ConfiguredUrlSafetyProvider;
 use App\Services\Abuse\UrlSafetyProvider;
+use App\Services\RolePermissions;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->scoped(RolePermissions::class);
         $this->app->bind(UrlSafetyProvider::class, ConfiguredUrlSafetyProvider::class);
     }
 
@@ -31,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('apple', AppleProvider::class);
         });
-        ResetPassword::createUrlUsing(fn ($user, string $token) => rtrim((string) env('FRONTEND_URL', 'http://localhost:3000'), '/').'/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset()));
+        ResetPassword::createUrlUsing(fn ($user, string $token) => rtrim((string) config('shortener.frontend_url'), '/').'/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset()));
 
         RateLimiter::for('api', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.api'))->by($request->user()?->id ?: $request->ip()));
         RateLimiter::for('auth', fn (Request $request) => Limit::perMinute(config('shortener.rate_limits.auth'))->by(strtolower((string) $request->input('email')).'|'.$request->ip()));

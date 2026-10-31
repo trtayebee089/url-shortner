@@ -1,6 +1,6 @@
 # Administration and billing
 
-The superadmin workspace is `/admin`, using the existing Sanctum bearer-token authentication. Only active, verified `superadmin` accounts with the `admin` token ability (or the normal web token's `*`) can access management APIs. Ordinary `admin` accounts retain moderation access but cannot manage billing. Public registration cannot assign roles.
+The administration workspace is `/admin`, using the existing Sanctum bearer-token authentication. Active, verified staff need the matching role permission and the `admin` token ability (or the normal web token's `*`) for management APIs. Superadmins alone manage staff and role definitions. Public registration cannot assign roles. See [staff access](staff-access.md) for defaults and legacy-admin migration behavior.
 
 ## Owner setup
 

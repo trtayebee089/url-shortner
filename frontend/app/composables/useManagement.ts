@@ -3,8 +3,8 @@ import type { Page } from '~/types/billing'
 
 export async function useManagement<T>(resource: string) {
   const { request } = useApi()
-  const search = ref(''), status = ref(''), page = ref(1)
-  const query = computed(() => ({ search: search.value || undefined, status: status.value || undefined, page: page.value }))
+  const search = ref(''), status = ref(''), role = ref(''), page = ref(1)
+  const query = computed(() => ({ search: search.value || undefined, status: status.value || undefined, role: role.value || undefined, page: page.value }))
   const result = await useAsyncData(`management-${resource}`, () => request<ApiEnvelope<Page<T>>>(`management/${resource}`, { query: query.value }), { watch: [query] })
   const rows = computed(() => result.data.value?.data.data || [])
   const pagination = computed(() => result.data.value?.data)
@@ -21,5 +21,5 @@ export async function useManagement<T>(resource: string) {
       return false
     } finally { saving.value = false }
   }
-  return { ...result, rows, pagination, search, status, page, message, failure, saving, mutate }
+  return { ...result, rows, pagination, search, status, role, page, message, failure, saving, mutate }
 }

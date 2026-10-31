@@ -33,7 +33,7 @@ class BillingManagementTest extends TestCase
     public function test_management_requires_superadmin_active_verified_account_and_token_scope(): void
     {
         $this->getJson('/api/v1/management/overview')->assertUnauthorized();
-        foreach (['user', 'admin'] as $role) {
+        foreach (['user'] as $role) {
             Sanctum::actingAs(User::factory()->create(['role' => $role]), ['*']);
             foreach (['overview', 'customers', 'plans', 'subscriptions', 'payments', 'audit'] as $route) {
                 $this->getJson('/api/v1/management/'.$route)->assertForbidden();
