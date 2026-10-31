@@ -16,7 +16,7 @@ onMounted(async () => {
 
   try {
     const response = await finishSocialLogin(ticket)
-    await navigateTo(response.data.user.email_verified_at ? '/dashboard' : '/verify-email', { replace: true })
+    await navigateTo(response.data.user.email_verified_at ? (response.data.user.role === 'superadmin' ? '/admin' : '/dashboard') : '/verify-email', { replace: true })
   } catch {
     error.value = 'Social sign-in expired or could not be completed. Please try again.'
   }

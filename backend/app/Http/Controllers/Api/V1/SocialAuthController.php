@@ -24,13 +24,22 @@ class SocialAuthController extends Controller
     {
         abort_unless(in_array($provider, self::PROVIDERS, true), 404);
         if (! $this->configured($provider)) {
+            if (app()->isLocal()) {
+                $required = $provider === 'google' ? ['client_id', 'client_secret', 'redirect'] : ['client_id', 'redirect', 'team_id', 'key_id', 'private_key'];
+                Log::warning('Social login configuration is incomplete.', [
+                    'provider' => $provider,
+                    'missing_keys' => array_values(array_filter($required, fn ($key) => empty(config('services.'.$provider.'.'.$key)))),
+                    'configuration_cached' => app()->configurationIsCached(),
+                ]);
+            }
+
             return $this->failure('configuration');
         }
 
         $state = Str::random(64);
-        Cache::put($this->stateKey($provider, $state), true, now()->addMinutes(10));
 
         try {
+            Cache::put($this->stateKey($provider, $state), true, now()->addMinutes(10));
             $driver = Socialite::driver($provider)->stateless()->with(['state' => $state]);
             if ($provider === 'apple') {
                 $driver->cookieNonce();
@@ -71,6 +80,10 @@ class SocialAuthController extends Controller
             }
             $user = $accounts->resolve($provider, $driver->user());
         } catch (SocialAuthenticationException $exception) {
+            if (app()->isLocal()) {
+                Log::notice('Social login identity rejected.', ['provider' => $provider, 'reason' => $exception->reason]);
+            }
+
             return $this->clearState($this->failure($exception->reason), $provider);
         } catch (Throwable $exception) {
             Log::warning('Social login callback failed.', ['provider' => $provider, 'exception' => get_class($exception)]);

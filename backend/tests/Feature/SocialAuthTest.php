@@ -3,8 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as ProviderUser;
 use Mockery;
@@ -121,6 +128,43 @@ class SocialAuthTest extends TestCase
         $this->assertDatabaseMissing('personal_access_tokens', ['token' => hash('sha256', explode('|', $token, 2)[1])]);
     }
 
+    public function test_google_code_is_exchanged_by_socialite_and_token_can_access_dashboard(): void
+    {
+        $this->configured('google');
+        $requests = [];
+        $handler = HandlerStack::create(new MockHandler([
+            new Response(200, [], json_encode(['access_token' => 'provider-access-token', 'token_type' => 'Bearer', 'expires_in' => 3600])),
+            new Response(200, [], json_encode(['sub' => 'google-http-user', 'name' => 'Google Member', 'email' => 'google-http@example.com', 'email_verified' => true])),
+        ]));
+        $handler->push(Middleware::history($requests));
+        Socialite::driver('google')->setHttpClient(new Client(['handler' => $handler]));
+
+        $redirect = $this->get('/api/v1/auth/google')->assertRedirect();
+        parse_str(parse_url($redirect->headers->get('Location'), PHP_URL_QUERY), $query);
+        // Feature requests share the Socialite manager; bind the next callback request explicitly.
+        Socialite::driver('google')->setRequest(Request::create('/api/v1/auth/google/callback', 'GET', ['code' => 'provider-code']));
+        [$user, $token] = $this->callbackAndExchange('google', $query['state'], $query['state']);
+
+        parse_str((string) $requests[0]['request']->getBody(), $exchange);
+        $this->assertSame('provider-code', $exchange['code']);
+        $this->assertSame('google-test-secret', $exchange['client_secret']);
+        $this->assertSame(config('services.google.redirect'), $exchange['redirect_uri']);
+        $this->assertSame('Bearer provider-access-token', $requests[1]['request']->getHeaderLine('Authorization'));
+        $this->assertSame('google-http@example.com', $user['email']);
+        $this->withToken($token)->getJson('/api/v1/dashboard')->assertOk();
+    }
+
+    public function test_missing_google_configuration_logs_only_key_names_in_development(): void
+    {
+        $this->app->detectEnvironment(fn () => 'local');
+        config()->set('services.google', ['client_id' => 'test-id', 'client_secret' => '', 'redirect' => 'http://localhost:8000/api/v1/auth/google/callback']);
+        Log::spy();
+        $this->get('/api/v1/auth/google')->assertRedirectContains('oauth_error=configuration');
+        Log::shouldHaveReceived('warning')->with('Social login configuration is incomplete.', [
+            'provider' => 'google', 'missing_keys' => ['client_secret'], 'configuration_cached' => false,
+        ])->once();
+    }
+
     public function test_google_links_an_existing_email_password_user(): void
     {
         $existing = User::factory()->unverified()->create(['email' => 'member@example.com']);
@@ -168,6 +212,7 @@ class SocialAuthTest extends TestCase
 
     public function test_missing_configuration_invalid_state_and_unverified_email_fail_closed(): void
     {
+        config()->set('services.google', []);
         $this->get('/api/v1/auth/google/redirect')->assertRedirectContains('oauth_error=configuration');
         [$state, $cookie] = $this->start('google', ProviderUser::fake([
             'id' => 'google-sub-3', 'email' => 'unverified@example.com', 'email_verified' => false,

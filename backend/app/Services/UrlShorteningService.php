@@ -98,6 +98,13 @@ class UrlShorteningService
     private function persist(array $data, ?User $user, string $code): Link
     {
         return DB::transaction(function () use ($data, $user, $code) {
+            if ($user && ! $user->isAdmin()) {
+                User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+                $plan = app(BillingService::class)->plan($user);
+                if ($plan?->link_limit !== null && $user->links()->count() >= $plan->link_limit) {
+                    throw ValidationException::withMessages(['plan' => ['Your plan’s link limit has been reached. Manage your subscription from Billing.']]);
+                }
+            }
             $tags = $data['tags'] ?? [];
             unset($data['tags']);
             $link = Link::create([

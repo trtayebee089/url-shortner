@@ -17,13 +17,62 @@ Run the `social_accounts` migration before enabling the social buttons against a
 
 ## Provider consoles
 
-For production, register the Google **Web application** redirect URI exactly as `https://api.247.bd/api/v1/auth/google/callback` and its JavaScript origin as `https://247.bd`. Configure the OAuth consent screen and request access to basic `openid`, `profile`, and `email` scopes. Set `GOOGLE_REDIRECT_URI` to that same callback.
+Keep the production Google **Web application** redirect URI and `GOOGLE_REDIRECT_URI` identical to the existing deployed callback. The registered `https://247.bd/api/v1/auth/google/callback` requires that host to route the callback to Laravel. If Laravel instead serves it at `api.247.bd`, that separate URI must be registered before using it. Local fixes do not change either production setting. Configure the OAuth consent screen and request access to basic `openid`, `profile`, and `email` scopes.
 
 For Apple, create a Sign in with Apple-enabled primary App ID, a web **Services ID** (`APPLE_CLIENT_ID`), and a Sign in with Apple key. Associate the Services ID with the website domain and register `https://api.247.bd/api/v1/auth/apple/callback` as its return URL. Set the Apple Team ID and key ID, put the downloaded `.p8` file on the API host, and set `APPLE_PRIVATE_KEY_PATH` to its absolute path. The provider requests name and email, accepts Apple's `form_post` callback, verifies its signed identity token and nonce, and works with private relay addresses. Configure Apple's private email relay domain and sender registration if 247URL must send verification or password-reset mail to relay addresses.
 
 ## Local development
 
 Google can use `http://localhost:8000/api/v1/auth/google/callback` with `GOOGLE_REDIRECT_URI` set identically and Nuxt at `http://localhost:3000`. Start both services on those exact origins.
+
+Set these in `backend/.env` (retain the actual credentials):
+
+```dotenv
+APP_ENV=local
+APP_URL=http://localhost:8000
+FRONTEND_URL=http://localhost:3000
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+GOOGLE_CLIENT_ID=<Google Web application client ID>
+GOOGLE_CLIENT_SECRET=<Google Web application client secret>
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
+```
+
+Set these in `frontend/.env`; a production API origin here sends local Google login to the production Laravel configuration:
+
+```dotenv
+NUXT_API_BASE=http://localhost:8000/api/v1
+NUXT_PUBLIC_API_BASE=http://localhost:8000/api/v1
+NUXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+With the configured local database running, execute in `backend/`:
+
+```powershell
+php artisan migrate
+php artisan optimize
+php artisan oauth:check-google
+php artisan route:list --path=api/v1/auth
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+The diagnostic reads resolved Laravel config, reports credential presence without showing values, and shows the callback, frontend, cache and CORS settings. Database cache needs its migrated tables and a working database; do not use `CACHE_STORE=array` for browser OAuth because state must survive separate requests. Restart Nuxt with `npm run dev` in `frontend/` after changing its environment. Use `localhost` for both browser origins, rather than mixing it with `127.0.0.1`.
+
+If local MySQL is unavailable, the native development setup can use the existing `backend/database/database.sqlite` with `DB_CONNECTION=sqlite`, `DB_DATABASE` set to its absolute path, and `CACHE_STORE=database`. Run the migrations and optimize commands after switching. This selects the SQLite database's users and links; it does not copy MySQL data. Keep production database settings separate.
+
+The Google button navigates to `GET /api/v1/auth/google`; the existing `/google/redirect` remains compatible. The constrained `{provider}/callback` route accepts `GET /api/v1/auth/google/callback`. Laravel returns a browser-bound ticket to `/auth/complete`, Nuxt exchanges it with credentials included, stores the normal Sanctum bearer token, then opens `/dashboard`.
+
+For Docker, `backend` already reads `backend/.env` via `env_file`, but Compose's `environment` overrides `APP_URL` and `FRONTEND_URL`. Set those to the intended browser origins in the root Compose environment too. Recreate the backend after environment edits, then run the diagnostic **inside** it:
+
+```powershell
+docker compose up -d --build backend
+docker compose exec backend php artisan migrate
+docker compose exec backend php artisan optimize
+docker compose exec backend php artisan oauth:check-google
+```
+
+The default Compose stack exposes Laravel through Nginx on port 80, not directly on host port 8000. A port-8000 callback needs a local Compose port mapping (`127.0.0.1:8000:8000`) or the native `artisan serve` setup above.
+
+Test at `http://localhost:3000/login`: click Google, authorize with a Google account (add it as an OAuth test user if the consent app is in testing), confirm return through `/auth/complete` to `/dashboard`, reload the dashboard, then log out and sign in again. Also test cancelling Google authorization. Apple remains a separate existing provider; no Apple setup is needed for Google.
 
 Apple does not accept `localhost`, IP addresses, or HTTP redirect URLs for web sign-in. Use an HTTPS development domain or tunnel that reaches the local Laravel API, register its exact `/api/v1/auth/apple/callback` URL and domain in Apple Developer, and point `APPLE_REDIRECT_URI` to it. Use separate development provider credentials and a development `.p8` key. The Apple nonce/state cookies require HTTPS.
 

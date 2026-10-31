@@ -104,6 +104,8 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
+    '/admin': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'Cache-Control': 'private, no-store, max-age=0' } },
+    '/admin/**': { ssr: false, headers: { 'X-Robots-Tag': 'noindex, nofollow, noarchive', 'Cache-Control': 'private, no-store, max-age=0' } },
     /**
      * Keep the homepage HTML tied to the active Nuxt build. Hashed Nuxt
      * assets remain cacheable, but cached SSR HTML can outlive a deployment.
@@ -121,7 +123,7 @@ export default defineNuxtConfig({
     },
 
     '/pricing': {
-      swr: 86400,
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
     },
 
     '/resources': {

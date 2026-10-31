@@ -1,0 +1,23 @@
+[
+  "app/Console/Commands/CheckGoogleOAuth.php",
+  "app/Console/Commands/ProvisionSuperAdmin.php",
+  "app/Http/Controllers/Api/V1/BillingController.php",
+  "app/Http/Controllers/Api/V1/ManagementController.php",
+  "app/Http/Controllers/Api/V1/SocialAuthController.php",
+  "app/Http/Middleware/EnsureSuperAdmin.php",
+  "app/Models/AdminAuditLog.php",
+  "app/Models/ManualPayment.php",
+  "app/Models/Plan.php",
+  "app/Models/Subscription.php",
+  "app/Models/User.php",
+  "app/Services/BillingService.php",
+  "app/Services/StripeBillingService.php",
+  "app/Services/UrlShorteningService.php",
+  "bootstrap/app.php",
+  "config/services.php",
+  "config/shortener.php",
+  "database/migrations/2026_10_31_000000_create_billing_management_tables.php",
+  "database/migrations/2026_10_31_000001_add_stripe_billing_fields.php",
+  "routes/api.php",
+  "routes/console.php"
+]

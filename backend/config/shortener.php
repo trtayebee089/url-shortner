@@ -11,7 +11,7 @@ return [
     'allow_anonymous' => (bool) env('ALLOW_ANONYMOUS_LINKS', true),
     'reserved_aliases' => array_filter(array_map('trim', explode(',', env(
         'SHORT_RESERVED_ALIASES',
-        'admin,api,login,register,dashboard,settings,pricing,about,contact,terms,privacy,auth,logout,robots.txt,sitemap.xml,features,faq,resources,verify-email,forgot-password,reset-password,blog,docs'
+        'admin,billing,management,api,login,register,dashboard,settings,pricing,about,contact,terms,privacy,auth,logout,robots.txt,sitemap.xml,features,faq,resources,verify-email,forgot-password,reset-password,blog,docs'
     )))),
     'blocked_domains' => array_filter(array_map('strtolower', array_map('trim', explode(',', env('SHORT_BLOCKED_DOMAINS', ''))))),
     'analytics_retention_days' => (int) env('ANALYTICS_RETENTION_DAYS', 90),

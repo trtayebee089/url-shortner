@@ -11,7 +11,8 @@ async function connect(provider: 'google' | 'apple') {
   error.value = ''
   try {
     await nextTick()
-    await navigateTo(`${config.public.apiBase.replace(/\/$/, '')}/auth/${provider}/redirect`, { external: true })
+    const path = provider === 'google' ? 'google' : 'apple/redirect'
+    await navigateTo(`${config.public.apiBase.replace(/\/$/, '')}/auth/${path}`, { external: true })
   } catch {
     error.value = `Unable to start ${provider === 'google' ? 'Google' : 'Apple'} sign-in. Please try again.`
     pending.value = null

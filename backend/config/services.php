@@ -35,6 +35,13 @@ return [
         ],
     ],
 
+    'stripe' => [
+        'enabled' => (bool) env('STRIPE_ENABLED', false),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        'api_version' => '2025-02-24.acacia',
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

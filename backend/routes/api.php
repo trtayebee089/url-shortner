@@ -5,8 +5,10 @@ use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\ApiTokenController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BillingController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\LinkController;
+use App\Http\Controllers\Api\V1\ManagementController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\QrCodeController;
 use App\Http\Controllers\Api\V1\SocialAuthController;
@@ -14,7 +16,9 @@ use App\Http\Controllers\Api\V1\VerificationController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->middleware('throttle:api')->group(function () {
+    Route::get('plans', [BillingController::class, 'plans']);
     Route::prefix('auth')->group(function () {
+        Route::get('google', [SocialAuthController::class, 'redirect'])->defaults('provider', 'google')->middleware('throttle:social-auth');
         Route::get('{provider}/redirect', [SocialAuthController::class, 'redirect'])->whereIn('provider', ['google', 'apple'])->middleware('throttle:social-auth');
         Route::match(['get', 'post'], '{provider}/callback', [SocialAuthController::class, 'callback'])->whereIn('provider', ['google', 'apple'])->middleware('throttle:social-auth');
         Route::post('social/exchange', [SocialAuthController::class, 'exchange'])->middleware('throttle:social-auth');
@@ -34,6 +38,28 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
     Route::post('abuse-reports', [AbuseReportController::class, 'store'])->middleware('throttle:abuse-reports');
 
     Route::middleware(['auth:sanctum', 'active', 'verified'])->group(function () {
+        Route::prefix('billing')->middleware('abilities:account:manage')->group(function () {
+            Route::get('/', [BillingController::class, 'show']);
+            Route::post('checkout', [BillingController::class, 'checkout'])->middleware('throttle:auth');
+            Route::post('portal', [BillingController::class, 'portal'])->middleware('throttle:auth');
+        });
+        Route::prefix('management')->middleware(['abilities:admin', 'superadmin'])->controller(ManagementController::class)->group(function () {
+            Route::get('overview', 'overview');
+            Route::get('customers', 'customers');
+            Route::get('customers/{user}', 'customer');
+            Route::patch('customers/{user}', 'updateCustomer');
+            Route::post('customers/{user}/password-reset', 'resetPassword')->middleware('throttle:auth');
+            Route::get('plans', 'plans');
+            Route::post('plans', 'savePlan');
+            Route::put('plans/{plan}', 'savePlan');
+            Route::get('subscriptions', 'subscriptions');
+            Route::post('subscriptions', 'assign');
+            Route::post('subscriptions/{subscription}/cancel', 'cancel');
+            Route::get('payments', 'payments');
+            Route::post('payments', 'recordPayment');
+            Route::post('payments/{payment}/void', 'voidPayment');
+            Route::get('audit', 'audit');
+        });
         Route::get('dashboard', DashboardController::class)->middleware('ability:links:read,analytics:read');
         Route::get('analytics', [AnalyticsController::class, 'index'])->middleware(['abilities:analytics:read', 'throttle:analytics']);
         Route::get('links', [LinkController::class, 'index'])->middleware('abilities:links:read');
@@ -57,3 +83,6 @@ Route::prefix('v1')->middleware('throttle:api')->group(function () {
         });
     });
 });
+
+// Stripe authenticates deliveries using the raw-body signature, not a browser token.
+Route::post('v1/billing/stripe/webhook', [BillingController::class, 'webhook']);
